@@ -22,7 +22,7 @@ def request_help():
     data = request.get_json()
 
     # --- Validación Básica ---
-    required_fields = ['type', 'location', 'description']
+    required_fields = ['servicio', 'telefono', 'emergencia']
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
@@ -31,10 +31,14 @@ def request_help():
         message_data = json.dumps(data).encode("utf-8")
 
         # Publicar el mensaje
-        future = publisher.publish(topic_path, data=message_data)
-        message_id = future.result() # Espera confirmación (opcional, puede ralentizar)
+        # future = publisher.publish(topic_path, data=message_data)
+        # message_id = future.result() # Espera confirmación (opcional, puede ralentizar)
 
-        print(f"Published message {message_id} to {topic_path}")
+        # print(f"Published message {message_id} to {topic_path}")
+        print(f"Simulación: Publicaría en {topic_path} los datos: {message_data.decode('utf-8')}")
+        message_id = "simulated-local-id-123"
+
+        print(f"Simulated publish for message {message_id} to {topic_path}")
 
         # Responder al cliente que la solicitud fue aceptada
         return jsonify({"status": "received", "message_id": message_id}), 202
