@@ -8,10 +8,10 @@ app = Flask(__name__)
 # Set up Google Cloud Pub/Sub
 
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "splendid-strand-452918-e6")
-PUBUSB_TOPIC_ID = os.environ.get("PUBUSB_TOPIC_ID", "tu-topic-id")
+PUBSUB_TOPIC_ID = os.environ.get("PUBSUB_TOPIC_ID", "tu-topic-id")
 
 publisher = pubsub_v1.PublisherClient()
-topic_path = publisher.topic_path(PROJECT_ID, PUBUSB_TOPIC_ID)
+topic_path = publisher.topic_path(PROJECT_ID, PUBSUB_TOPIC_ID)
 
 @app.route('/api/request-help', methods=['POST'])
 def request_help():
