@@ -1,4 +1,4 @@
-import streamlit as st
+import Streamlit.streamlit as st
 from streamlit_js_eval import streamlit_js_eval
 
 st.title("Emergencias 112 📞")
