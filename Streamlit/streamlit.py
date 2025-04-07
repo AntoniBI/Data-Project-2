@@ -1,5 +1,7 @@
 import Streamlit.streamlit as st
 from streamlit_js_eval import streamlit_js_eval
+import requests
+import json
 
 st.title("Emergencias 112 📞")
 
@@ -74,3 +76,14 @@ if boton:
         st.error(f"❌ Error al obtener la ubicación: {location}")
     else:
         st.info("⌛ Esperando permiso para acceder a tu ubicación...")
+
+res = requests.post(url="http://127.0.0.1:8080/api/request-help", data=json.dumps({
+    "servicio": servicio,
+    "tipo": tipo,
+    "edad": edad,
+    "discapacidad": disc,
+    "nivel": nivel,
+    "latitud": lat,
+    "longitud": lon
+    
+}))
