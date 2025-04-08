@@ -6,7 +6,7 @@ from google.cloud import pubsub_v1
 app = Flask(__name__)
 
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "splendid-strand-452918-e6")
-PUBSUB_TOPIC_ID = os.environ.get("PUBSUB_TOPIC_ID", "poc_data2")
+PUBSUB_TOPIC_ID = os.environ.get("PUBSUB_TOPIC_ID", "emergencias_events")
 
 publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(PROJECT_ID, PUBSUB_TOPIC_ID)

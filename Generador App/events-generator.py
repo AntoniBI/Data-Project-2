@@ -24,7 +24,6 @@ niveles = [
 def generar_dato():
 
     tipo = random.choice(tipos)
-
     payload = {
         "servicio": random.choice(servicios),
         "tipo": tipo,
@@ -36,13 +35,11 @@ def generar_dato():
  
     if tipo == "Individual":
         payload["edad"] = random.randint(1, 100)
- 
     return payload
  
 def enviar_solicitudes(delay=5):
 
     i = 1
-
     while True:
         payload = generar_dato()
         try:
