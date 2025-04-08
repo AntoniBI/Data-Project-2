@@ -96,7 +96,7 @@ def obtener_payload():
         payload["edad"] = edad
 
     # Solo agregar latitud y longitud si se obtuvieron
-    if lat is not None and lon is not None:
+    if st.session_state.lat is not None and st.session_state.lon is not None:
         payload["latitud"] = st.session_state.lat
         payload["longitud"] = st.session_state.lon
 
