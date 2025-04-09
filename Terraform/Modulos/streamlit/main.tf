@@ -4,18 +4,16 @@ provider "google" {
     zone    = "europe-southwest1-a"
   
 }
-resource "google_cloud_run_service" "sample_service" {
-  name = "str-job-65485"
+resource "google_cloud_run_v2_service" "default" {
+  name     = "cloudrun-service"
   location = "europe-southwest1"
+  deletion_protection = false
+  ingress = "INGRESS_TRAFFIC_ALL"
+
   template {
-    spec {
-      containers {
-        image = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/streamlit-repo/str-job"
-        ports {
-          container_port = 8080 
-        }
-      }
-      timeout_seconds = 600 
+    containers {
+      image = "gcr.io/splendid-strand-452918-e6/emergencia-app"
     }
   }
 }
+
