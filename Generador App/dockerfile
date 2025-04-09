@@ -12,4 +12,4 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Comando para ejecutar el script
-CMD ["python", "events-generator.py"]
+CMD ["python3", "events-generator.py"]
