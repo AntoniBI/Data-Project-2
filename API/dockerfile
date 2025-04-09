@@ -8,7 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Expone el puerto que usa Flask (o el que configure Gunicorn/Cloud Run)
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación usando Gunicorn (producción)
