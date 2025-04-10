@@ -29,8 +29,8 @@ def generar_dato():
         "tipo": tipo,
         "discapacidad": random.choice(discapacidades),
         "nivel_emergencia": random.choice(niveles),
-        "latitud": round(random.uniform(36.0, 43.0), 6),
-        "longitud": round(random.uniform(-9.0, 3.5), 6),
+        "lat": round(random.uniform(36.0, 43.0), 6),
+        "lon": round(random.uniform(-9.0, 3.5), 6),
     }
  
     if tipo == "Individual":
@@ -45,7 +45,7 @@ def enviar_solicitudes(delay=5):
         try:
 
             res = requests.post(
-                url="http://127.0.0.1:8080/api/request-help",
+                url="http://127.0.0.1:8082/api/request-help",
                 data=json.dumps(payload),
                 headers={"Content-Type": "application/json"},
             )

@@ -9,7 +9,7 @@ lat= None
 lon= None
 
 servicio = st.selectbox(
-    "¿Qué servicio necesitas?",
+    "🛠️ ¿Qué servicio necesitas?",
     ("Policía", "Bomberos", "Ambulancia"),
     index=None,
     placeholder="Selecciona un servicio",
@@ -17,7 +17,7 @@ servicio = st.selectbox(
 st.write("Has seleccionado:", servicio)
 
 tipo = st.selectbox(
-    "¿La afectación es individual o colectiva?",
+    "👥 ¿La afectación es individual o colectiva?",
     ("Individual", "Colectiva"),
     index=None,
     placeholder="Selecciona la afectación",
@@ -29,7 +29,7 @@ if tipo == "Individual":
     st.write("La persona afectada tiene:", edad, "años")
 
 disc = st.selectbox(
-    "¿Tiene algún tipo de discapacidad?",
+    "♿ ¿Tiene algún tipo de discapacidad?",
     ("Grado 1: Discapacidad nula", "Grado 2: Discapacidad leve", "Grado 3: Discapacidad moderada", "Grado 4: Discapacidad grave", "Grado 5: Discapacidad muy grave"),
     index=None,
     placeholder="Selecciona el grado de discapacidad",
@@ -37,12 +37,14 @@ disc = st.selectbox(
 st.write("Has seleccionado:", disc)
 
 nivel = st.selectbox(
-    "¿Cuál es el nivel de emergencia?",
+    "⚠️ ¿Cuál es el nivel de emergencia?",
     ("Nivel 1: Emergencia leve", "Nivel 2: Emergencia moderada", "Nivel 3: Emergencia grave"),
     index=None,
     placeholder="Selecciona el nivel de emergencia",
 )
 st.write("Has seleccionado:", nivel)
+
+st.subheader("📍 Ubicación del incidente")
 
 boton = st.button("🌍 Obtener ubicación precisa")
 
@@ -97,8 +99,8 @@ def obtener_payload():
 
     # Solo agregar latitud y longitud si se obtuvieron
     if st.session_state.lat is not None and st.session_state.lon is not None:
-        payload["latitud"] = st.session_state.lat
-        payload["longitud"] = st.session_state.lon
+        payload["lat"] = st.session_state.lat
+        payload["lon"] = st.session_state.lon
 
     return payload
 
@@ -110,7 +112,7 @@ if enviar:
     
     # Realizamos el envío
     try:
-        res = requests.post(url="http://127.0.0.1:8080/api/request-help", data=json.dumps(payload), headers={"Content-Type": "application/json"})
+        res = requests.post(url="http://127.0.0.1:8082/api/request-help", data=json.dumps(payload), headers={"Content-Type": "application/json"})
         
         if res.status_code == 202:
             st.success("Solicitud enviada con éxito!")
