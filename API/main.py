@@ -2,7 +2,7 @@ import os
 import json
 from flask import Flask, request, jsonify
 from google.cloud import pubsub_v1
-from google.cloud import bigquery
+# from google.cloud import bigquery
 
 app = Flask(__name__)
 
@@ -42,7 +42,7 @@ def request_help():
         return jsonify({"error": "Failed to process request"}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 8082))
     app.run(debug=True, host='0.0.0.0', port=port)
 
 
