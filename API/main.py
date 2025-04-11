@@ -8,10 +8,6 @@ app = Flask(__name__)
 
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "splendid-strand-452918-e6")
 PUBSUB_TOPIC_ID = os.environ.get("PUBSUB_TOPIC_ID", "emergencias_events")
-DATASET_ID = "emergencia_events" #PruebaBigQuery
-TABLE_ID = "eventos_112" #PruebaBigQuery
-
-bq_client = bigquery.Client(project=PROJECT_ID) #PruebaBigQuery
 
 publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(PROJECT_ID, PUBSUB_TOPIC_ID)

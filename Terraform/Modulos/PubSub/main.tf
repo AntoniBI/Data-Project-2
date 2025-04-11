@@ -1,3 +1,8 @@
+provider "google" {
+  project = var.project_id
+  region  = var.region
+}
+
 resource "google_pubsub_topic" "data_events" {
   name = "emergencias_events"
 }
