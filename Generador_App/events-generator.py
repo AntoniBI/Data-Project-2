@@ -2,9 +2,8 @@ import random
 import json
 import requests
 import time
-# import uuid
-
-
+import uuid  # Importar para generar IDs únicos
+from datetime import datetime 
 
 servicios = ["Policía", "Bomberos", "Ambulancia"]
  
@@ -28,6 +27,8 @@ def generar_dato():
 
     tipo = random.choice(tipos)
     payload = {
+        "id": str(uuid.uuid4())[:8],  # Generar un ID único
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # Formatear el timestamp
         "servicio": random.choice(servicios),
         "tipo": tipo,
         "discapacidad": random.choice(discapacidades),
@@ -65,5 +66,4 @@ def enviar_solicitudes(delay=5):
  
 if __name__ == "__main__":
 
-    enviar_solicitudes(delay=5)  
- 
+    enviar_solicitudes(delay=5)
