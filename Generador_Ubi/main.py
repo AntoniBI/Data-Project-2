@@ -1,20 +1,19 @@
 import random
 import time
-import psycopg2
-import requests
-import json
 from datetime import datetime
-
+from google.cloud.sql.connector import Connector
+from google.auth.transport.requests import Request
+import os
+import requests
 
 DB_CONFIG = {
     'dbname': 'recursos-emergencia',
     'user': 'vehiculos',
     'password': 'admin123',
-    'host': '34.175.101.61', # Cambia esto por la IP de tu base de datos
     'port': '5432',
 }
 
-API_URL = 'http://localhost:8082/api/update-location' 
+API_URL = 'http://localhost:8082/api/update-location'
 
 UBICACIONES_BASE = {
     'Policia': (39.4699, -0.3763),
@@ -22,14 +21,26 @@ UBICACIONES_BASE = {
     'Ambulancia': (39.4602, -0.3681),
 }
 
+
 def conectar_db():
-    return psycopg2.connect(**DB_CONFIG)
+   
+    connector = Connector()
+    
+    conn = connector.connect(
+        "splendid-strand-452918-e6:europe-southwest1:recursos",  
+        "pg8000",  
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+        db=DB_CONFIG['dbname'],
+    )
+    
+    return conn
 
 def obtener_recursos_disponibles():
     conn = conectar_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT recurso_id, servicio FROM recursos WHERE asignado = true
+        SELECT recurso_id, servicio FROM recursos WHERE asignado = false
     """)
     recursos = cur.fetchall()
     cur.close()
