@@ -2,7 +2,10 @@ import random
 import json
 import requests
 import time
- 
+# import uuid
+
+
+
 servicios = ["Policía", "Bomberos", "Ambulancia"]
  
 tipos = ["Individual", "Colectiva"]
