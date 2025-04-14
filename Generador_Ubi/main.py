@@ -3,23 +3,22 @@ import time
 import psycopg2
 import requests
 import json
+from datetime import datetime
 
-# Configuración de conexión a Cloud SQL
+
 DB_CONFIG = {
     'dbname': 'recursos-emergencia',
     'user': 'vehiculos',
     'password': 'admin123',
-    'host': '34.123.45.67',
+    'host': '34.175.101.61', # Cambia esto por la IP de tu base de datos
     'port': '5432',
 }
 
-# Configuración del endpoint de la API
-API_URL = 'http://localhost:8082/api/update-location'  # Asegúrate de ajustar si la API está en otro host o puerto
+API_URL = 'http://localhost:8082/api/update-location' 
 
-# Ubicación base por tipo de recurso
 UBICACIONES_BASE = {
-    'Policía': (39.4699, -0.3763),
-    'Bomberos': (39.4801, -0.3702),
+    'Policia': (39.4699, -0.3763),
+    'Bombero': (39.4801, -0.3702),
     'Ambulancia': (39.4602, -0.3681),
 }
 
@@ -30,7 +29,7 @@ def obtener_recursos_disponibles():
     conn = conectar_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, tipo FROM recursos WHERE asignado = true
+        SELECT recurso_id, servicio FROM recursos WHERE asignado = true
     """)
     recursos = cur.fetchall()
     cur.close()
@@ -53,15 +52,16 @@ def enviar_a_api(mensaje_dict):
 def simular_movimiento(intervalo=5):
     while True:
         recursos = obtener_recursos_disponibles()
-        for recurso_id, tipo in recursos:
-            base_lat, base_lon = UBICACIONES_BASE.get(tipo, (39.4699, -0.3763))
+        print(f"🔍 Movimiento asignado: {recursos}")
+        for recurso_id, servicio in recursos:
+            base_lat, base_lon = UBICACIONES_BASE.get(servicio, (39.4699, -0.3763))
             nueva_lat, nueva_lon = generar_nueva_ubicacion(base_lat, base_lon)
             mensaje = {
                 'recurso_id': recurso_id,
-                'tipo': tipo,
+                'servicio': servicio,
                 'latitud': nueva_lat,
                 'longitud': nueva_lon,
-                'timestamp': time.time(),
+                'timestamp_ubicacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             enviar_a_api(mensaje)
         time.sleep(intervalo)

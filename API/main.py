@@ -99,7 +99,7 @@ def update_location():
         return jsonify({"error": "Request must be JSON"}), 400
 
     data = request.get_json()
-    required_fields = ['recurso_id', 'tipo', 'latitud', 'longitud', 'timestamp']
+    required_fields = ['recurso_id', 'servicio', 'latitud', 'longitud', 'timestamp']
 
     missing_fields = [f for f in required_fields if f not in data]
     if missing_fields:
