@@ -2,8 +2,11 @@ import random
 import json
 import requests
 import time
- 
-servicios = ["Policía", "Bomberos", "Ambulancia"]
+from datetime import datetime
+import uuid
+
+
+servicios = ["Policia", "Bomberos", "Ambulancia"]
  
 tipos = ["Individual", "Colectiva"]
  
@@ -25,6 +28,8 @@ def generar_dato():
 
     tipo = random.choice(tipos)
     payload = {
+        "evento_id": str(uuid.uuid4())[:8],
+        "timestamp_evento": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "servicio": random.choice(servicios),
         "tipo": tipo,
         "discapacidad": random.choice(discapacidades),

@@ -1,0 +1,38 @@
+CREATE TABLE recursos (
+    recurso_id SERIAL PRIMARY KEY,
+    servicio VARCHAR(255),
+    asignado BOOLEAN 
+);
+
+INSERT INTO recursos (servicio, asignado) VALUES
+('Policia', TRUE),
+('Policia', FALSE),
+('Policia', TRUE),
+('Policia', FALSE),
+('Policia', FALSE),
+('Policia', FALSE),
+('Policia', FALSE),
+('Policia', FALSE),
+('Policia', FALSE),
+('Policia', FALSE),
+('Policia', FALSE),
+('Ambulancia', FALSE),
+('Ambulancia', FALSE),
+('Ambulancia', FALSE),
+('Ambulancia', FALSE),
+('Ambulancia', TRUE),
+('Ambulancia', FALSE),
+('Ambulancia', FALSE),
+('Ambulancia', FALSE),
+('Ambulancia', FALSE),
+('Ambulancia', FALSE),
+('Bombero', FALSE),
+('Bombero', FALSE),
+('Bombero', FALSE),
+('Bombero', TRUE),
+('Bombero', FALSE),
+('Bombero', FALSE),
+('Bombero', FALSE),
+('Bombero', FALSE),
+('Bombero', TRUE),
+('Bombero', FALSE);
