@@ -1,36 +1,46 @@
 import random
 import time
-import psycopg2
+from datetime import datetime
+from google.cloud.sql.connector import Connector
+from google.auth.transport.requests import Request
+import os
 import requests
-import json
 
-# Configuración de conexión a Cloud SQL
 DB_CONFIG = {
     'dbname': 'recursos-emergencia',
     'user': 'vehiculos',
     'password': 'admin123',
-    'host': '34.123.45.67',
     'port': '5432',
 }
 
-# Configuración del endpoint de la API
-API_URL = 'http://localhost:8082/api/update-location'  # Asegúrate de ajustar si la API está en otro host o puerto
+API_URL = 'http://localhost:8082/api/update-location'
 
-# Ubicación base por tipo de recurso
 UBICACIONES_BASE = {
-    'Policía': (39.4699, -0.3763),
-    'Bomberos': (39.4801, -0.3702),
+    'Policia': (39.4699, -0.3763),
+    'Bombero': (39.4801, -0.3702),
     'Ambulancia': (39.4602, -0.3681),
 }
 
+
 def conectar_db():
-    return psycopg2.connect(**DB_CONFIG)
+   
+    connector = Connector()
+    
+    conn = connector.connect(
+        "splendid-strand-452918-e6:europe-southwest1:recursos",  
+        "pg8000",  
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+        db=DB_CONFIG['dbname'],
+    )
+    
+    return conn
 
 def obtener_recursos_disponibles():
     conn = conectar_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, tipo FROM recursos WHERE asignado = true
+        SELECT recurso_id, servicio FROM recursos WHERE asignado = false
     """)
     recursos = cur.fetchall()
     cur.close()
@@ -53,15 +63,16 @@ def enviar_a_api(mensaje_dict):
 def simular_movimiento(intervalo=5):
     while True:
         recursos = obtener_recursos_disponibles()
-        for recurso_id, tipo in recursos:
-            base_lat, base_lon = UBICACIONES_BASE.get(tipo, (39.4699, -0.3763))
+        print(f"🔍 Movimiento asignado: {recursos}")
+        for recurso_id, servicio in recursos:
+            base_lat, base_lon = UBICACIONES_BASE.get(servicio, (39.4699, -0.3763))
             nueva_lat, nueva_lon = generar_nueva_ubicacion(base_lat, base_lon)
             mensaje = {
                 'recurso_id': recurso_id,
-                'tipo': tipo,
+                'servicio': servicio,
                 'latitud': nueva_lat,
                 'longitud': nueva_lon,
-                'timestamp': time.time(),
+                'timestamp_ubicacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             enviar_a_api(mensaje)
         time.sleep(intervalo)

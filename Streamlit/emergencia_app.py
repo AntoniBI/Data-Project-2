@@ -2,6 +2,8 @@ import streamlit as st
 from streamlit_js_eval import streamlit_js_eval
 import requests
 import json
+import uuid
+from datetime import datetime
 
 st.title("Emergencias 112 📞")
 
@@ -10,7 +12,7 @@ lon= None
 
 servicio = st.selectbox(
     "🛠️ ¿Qué servicio necesitas?",
-    ("Policía", "Bomberos", "Ambulancia"),
+    ("Policia", "Bombero", "Ambulancia"),
     index=None,
     placeholder="Selecciona un servicio",
 )
@@ -48,7 +50,6 @@ st.subheader("📍 Ubicación del incidente")
 
 boton = st.button("🌍 Obtener ubicación precisa")
 
-# Esta es la forma correcta de obtener la ubicación con promesa
 js_code = """
 new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
@@ -67,7 +68,6 @@ new Promise((resolve, reject) => {
 })
 """
 
-# Evaluar la expresión JS
 location = streamlit_js_eval(js_expressions=js_code, key="geoloc")
 if boton:
     if location and "coords" in location:
@@ -84,9 +84,10 @@ if boton:
     else:
         st.info("⌛ Esperando permiso para acceder a tu ubicación...")
 
-# Función para preparar los datos del payload
 def obtener_payload():
     payload = {
+        "evento_id": str(uuid.uuid4())[:8],
+        "timestamp_evento": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "servicio": servicio,
         "tipo": tipo,
         "discapacidad": disc,
@@ -104,10 +105,9 @@ def obtener_payload():
 
     return payload
 
-# Botón para enviar solicitud
 enviar = st.button("Enviar solicitud de ayuda")
 if enviar:
-    # Obtenemos el payload
+   
     payload = obtener_payload()
     
     # Realizamos el envío
