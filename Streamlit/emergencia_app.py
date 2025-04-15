@@ -86,7 +86,7 @@ if boton:
 
 def obtener_payload():
     payload = {
-        "evento_id": str(uuid.uuid4())[:8],
+        "event_id": str(uuid.uuid4())[:8],
         "timestamp_evento": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "servicio": servicio,
         "tipo": tipo,

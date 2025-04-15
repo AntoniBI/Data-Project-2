@@ -15,18 +15,20 @@ resource "google_bigquery_dataset" "emergencia-eventos" {
 
 resource "google_bigquery_table" "emergencias" {
   dataset_id = google_bigquery_dataset.emergencia-eventos.dataset_id
-  table_id   = "emergencias"
+  table_id   = "emergencias-macheada"
 
   schema = <<EOF
 [
-  {"name": "id", "type": "INT64"},
-  {"name": "servicio", "type": "STRING"},
-  {"name": "tipo", "type": "STRING"},
-  {"name": "edad", "type": "STRING"},
-  {"name": "disc", "type": "STRING"},
-  {"name": "nivel", "type": "STRING"},
-  {"name": "lat", "type": "FLOAT64"},
-  {"name": "lon", "type": "FLOAT64"}
+  {"name": "evento_id", "type": "STRING"},
+  {"name": "servicio_evento", "type": "STRING"},
+  {"name": "lat_evento", "type": "FLOAT64"},
+  {"name": "lon_evento", "type": "FLOAT64"},
+  {"name": "timestamp_evento", "type": "TIMESTAMP"},
+  {"name": "recurso_id", "type": "STRING"},
+  {"name": "servicio_recurso", "type": "STRING"},
+  {"name": "lat_recurso", "type": "FLOAT64"},
+  {"name": "lon_recurso", "type": "FLOAT64"},
+  {"name": "timestamp_ubicacion", "type": "TIMESTAMP"}
 ]
 EOF
 }

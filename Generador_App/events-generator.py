@@ -6,7 +6,7 @@ from datetime import datetime
 import uuid
 
 
-servicios = ["Policia", "Bomberos", "Ambulancia"]
+servicios = ["Policia", "Bombero", "Ambulancia"]
  
 tipos = ["Individual", "Colectiva"]
  
@@ -34,8 +34,8 @@ def generar_dato():
         "tipo": tipo,
         "discapacidad": random.choice(discapacidades),
         "nivel_emergencia": random.choice(niveles),
-        "lat": round(random.uniform(36.0, 43.0), 6),
-        "lon": round(random.uniform(-9.0, 3.5), 6),
+        "lat": round(random.uniform(39.4300, 39.5100), 6),
+        "lon": round(random.uniform(-0.4200, -0.3400), 6),
     }
  
     if tipo == "Individual":
