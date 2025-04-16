@@ -1,0 +1,24 @@
+{
+    "dashboard": {
+      "id": null,
+      "title": "BigQuery Dashboard",
+      "timezone": "browser",
+      "panels": [
+        {
+          "type": "graph",
+          "title": "Example Panel",
+          "targets": [
+            {
+              "refId": "A",
+              "format": "time_series",
+              "datasource": "BigQuery",
+              "rawSql": "SELECT timestamp, metric_value FROM `your-project-id.your-dataset.your-table` ORDER BY timestamp DESC LIMIT 1000",
+              "timeColumn": "timestamp",
+              "metricColumn": "metric_value"
+            }
+          ]
+        }
+      ]
+    },
+    "overwrite": true
+  }
