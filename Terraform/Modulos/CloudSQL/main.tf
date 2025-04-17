@@ -1,7 +1,4 @@
-provider "google" {
-  project = var.project_id
-  region  = var.region
-}
+
 
 resource "google_sql_database_instance" "emergencias" {
   name             = "recursos"
@@ -41,18 +38,11 @@ resource "google_sql_user" "usuario" {
 
 resource "null_resource" "init_sql" {
   provisioner "local-exec" {
-    command = <<EOT
-sleep 60
-PGPASSWORD=${var.db_password} psql \
-  -h ${google_sql_database_instance.emergencias.public_ip_address} \
-  -U ${var.db_user} \
-  -d ${var.db_name} \
-  -p 5432 \
-  -f init.sql
-EOT
+    command = "psql -h ${google_sql_database_instance.emergencias.public_ip_address} --username=${var.db_user} -d ${var.db_name} -p 5432 -f init.sql"
     environment = {
       PGPASSWORD = var.db_password
     }
+    interpreter = ["PowerShell", "-Command"]
   }
 
   depends_on = [
@@ -60,3 +50,4 @@ EOT
     google_sql_user.usuario
   ]
 }
+
