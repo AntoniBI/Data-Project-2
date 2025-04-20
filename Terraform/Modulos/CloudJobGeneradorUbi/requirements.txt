@@ -1,0 +1,4 @@
+google-cloud-pubsub
+datetime
+cloud-sql-python-connector[pg8000]
+pg8000
