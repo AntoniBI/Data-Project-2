@@ -50,7 +50,7 @@ def enviar_solicitudes(delay=5):
         try:
 
             res = requests.post(
-                url="http://127.0.0.1:8082/api/request-help",
+                url="http://127.0.0.1:8080/api/request-help",
                 data=json.dumps(payload),
                 headers={"Content-Type": "application/json"},
             )
