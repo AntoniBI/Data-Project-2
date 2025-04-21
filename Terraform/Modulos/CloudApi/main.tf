@@ -36,3 +36,4 @@ resource "google_cloud_run_service" "default" {
   depends_on = [null_resource.docker_build]
 }
 
+
