@@ -4,7 +4,9 @@ import requests
 import time
 from datetime import datetime
 import uuid
+import os
 
+API_URL = os.environ.get("api_url")
 
 servicios = ["Policia", "Bombero", "Ambulancia"]
  
@@ -50,7 +52,7 @@ def enviar_solicitudes(delay=5):
         try:
 
             res = requests.post(
-                url="http://127.0.0.1:8080/api/request-help",
+                url=f"{API_URL}/api/request-help",
                 data=json.dumps(payload),
                 headers={"Content-Type": "application/json"},
             )
