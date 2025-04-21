@@ -1,6 +1,6 @@
 resource "google_artifact_registry_repository" "my_repo" {
   location      = "europe-southwest1"
-  repository_id = "data-project-repo-job"
+  repository_id = "data-project-repo-job-1"
   description   = "Repository for data project"
   format        = "DOCKER"
 
@@ -9,7 +9,7 @@ resource "google_artifact_registry_repository" "my_repo" {
 
 resource "null_resource" "docker_build" {
   provisioner "local-exec" {
-    command = "docker build--platform=linux/amd64 -t gen_app . && docker tag gen_app europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo-job/str-image:latest && docker push europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo-job/str-image:latest"
+    command = "docker build --platform=linux/amd64 -t gen_app . && docker tag gen_app europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo-job-1/str-image:latest && docker push europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo-job-1/str-image:latest"
 
   }
 
@@ -17,13 +17,13 @@ resource "null_resource" "docker_build" {
 }
 
 resource "google_cloud_run_v2_job" "run_job" {
-  name     = "str-image-job-generador-app"
+  name     = "str-image"
   location = "europe-southwest1"
 
   template {
     template {
       containers {
-        image = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo-job/str-image:latest"
+        image = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo-job-1/str-image:latest"
       }
 
       # Configura si tu script necesita alguna env var o recurso
@@ -37,7 +37,7 @@ resource "google_cloud_run_v2_job" "run_job" {
 
 resource "null_resource" "execute_run_job" {
   provisioner "local-exec" {
-    command = "gcloud run jobs execute str-image-job --region=europe-southwest1 --project=splendid-strand-452918-e6"
+    command = "gcloud run jobs execute str-image --region=europe-southwest1 --project=splendid-strand-452918-e6"
   }
 
   depends_on = [google_cloud_run_v2_job.run_job]
