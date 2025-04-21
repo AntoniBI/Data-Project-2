@@ -25,10 +25,15 @@ class CalcularCoeficiente(beam.DoFn):
     def process(self, mensaje):
         import random
         clave, (vehiculos, emergencias) = mensaje
-        for dict in emergencias:
-            dict['coeficiente'] = random.random()
 
-        if clave == "Bomberos":
+        for emergencia in emergencias:
+            coeficinetes_lista = []
+            for vehiculo in vehiculos:
+                coficiente = random.random()
+                coeficinetes_lista.append(coficiente)
+                emergencia["coeficientes"]=coeficinetes_lista
+
+        if clave == "Bombero":
             yield beam.pvalue.TaggedOutput("Bomberos", (vehiculos, emergencias))
         elif clave == "Policia":
             yield beam.pvalue.TaggedOutput("Policia", (vehiculos, emergencias))
@@ -38,9 +43,12 @@ class CalcularCoeficiente(beam.DoFn):
 class Asignacion(beam.DoFn):
     def process(self, mensaje):
         vehiculos, emergencias = mensaje
-        if emergencias:
-            match_evento=max(emergencias, key=lambda x: x['coeficiente'])
-            yield beam.pvalue.TaggedOutput("Match", (vehiculos, match_evento))
+        if emergencias and vehiculos:
+            numero_posiciones=len(emergencias[0]["coeficientes"])
+            for emergencia in emergencias:
+                for i in range(numero_posiciones):
+                    match_evento = max(emergencias, key=lambda x: x["coeficientes"][i])
+                    yield beam.pvalue.TaggedOutput("Match", (vehiculos[i], match_evento))
         
 
             
