@@ -24,6 +24,12 @@ resource "google_cloud_run_v2_job" "run_job" {
     template {
       containers {
         image = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo-job-2/str-image:latest"
+      
+      env {
+          name  = "api_url"
+          value = var.api_url
+        }
+
       }
 
       # Configura si tu script necesita alguna env var o recurso

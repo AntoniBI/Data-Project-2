@@ -1,4 +1,3 @@
-#Ejemplo crear tabla en bigquery. Hay que crear esquemas
 provider "google" {
     project = "splendid-strand-452918-e6"
     region  = "europe-southwest1"
@@ -6,7 +5,6 @@ provider "google" {
   
 }
 
-# BigQuery Resources
 resource "google_bigquery_dataset" "emergencia-eventos" {
   dataset_id  = "emergencia_eventos"
   project     = var.project_id
