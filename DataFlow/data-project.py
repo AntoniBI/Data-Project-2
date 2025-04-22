@@ -66,7 +66,7 @@ def run():
 
         no_match= (
             p
-            | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/no_match-sub')
+            | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/no_matched-sub')
         )
 
         evenetos_emergencias = (
@@ -117,7 +117,7 @@ def run():
                 | "Flatten No Matches" >> beam.Flatten()
             )
 
-        all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="")
+        all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched")
 
         all_matches = (
                 (asignacion_bomb.Match, asignacion_pol.Match, asignacion_amb.Match)
