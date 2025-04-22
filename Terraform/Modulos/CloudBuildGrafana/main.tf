@@ -9,7 +9,7 @@ resource "google_artifact_registry_repository" "my_repo" {
 
 resource "null_resource" "docker_build" {
   provisioner "local-exec" {
-    command = "docker build -t grafana . && docker tag grafana europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo/str-image:latest && docker push europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo/str-image:latest"
+    command = "docker build --platform=linux/amd64 -t grafana . && docker tag grafana europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo/str-image:latest && docker push europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo/str-image:latest"
 
   }
 

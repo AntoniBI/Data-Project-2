@@ -1,8 +1,3 @@
-variable "project_id" {
-  description = "splendid-strand-452918-e6"
-}
-
-variable "region" {
-  description = "Región donde se desplegarán los recursos"
-  default     = "europe-southwest1"
+variable "api_url" {
+  default ="https://str-service-puifiielba-no.a.run.app"
 }
