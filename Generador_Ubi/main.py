@@ -135,28 +135,28 @@ def obtener_recursos_disponibles():
     conn = conectar_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT recurso_id, servicio FROM recursos WHERE asignado = FALSE
+        SELECT * FROM recursos WHERE asignado = FALSE
     """)
     recursos = cur.fetchall()
     cur.close()
     conn.close()
     return recursos
 
-def obtener_ubicacion_base(servicio):
-    """Obtener la ubicación base de un servicio desde la base de datos"""
-    conn = conectar_db()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT latitud, longitud FROM recursos WHERE servicio = %s AND asignado = false LIMIT 1
-    """, (servicio,))
-    resultado = cur.fetchone()
-    cur.close()
-    conn.close()
+# def obtener_ubicacion_base(servicio):
+#     """Obtener la ubicación base de un servicio desde la base de datos"""
+#     conn = conectar_db()
+#     cur = conn.cursor()
+#     cur.execute("""
+#         SELECT latitud, longitud FROM recursos WHERE servicio = %s AND asignado = false LIMIT 1
+#     """, (servicio,))
+#     resultado = cur.fetchone()
+#     cur.close()
+#     conn.close()
     
-    if resultado:
-        return resultado[0], resultado[1]  # latitud, longitud
-    else:
-        return 39.4699, -0.3763  # ubicación por defecto
+#     if resultado:
+#         return resultado[0], resultado[1]  # latitud, longitud
+#     else:
+#         return 39.4699, -0.3763  # ubicación por defecto
 
 def generar_nueva_ubicacion(base_lat, base_lon):
     """Generar una nueva ubicación aleatoria dentro de un rango cercano a la ubicación base"""
@@ -173,19 +173,19 @@ def enviar_a_api(mensaje_dict):
     except requests.exceptions.RequestException as e:
         print(f"❌ Error al enviar a la API: {e}")
 
-def simular_movimiento(intervalo=5):
+def simular_movimiento(intervalo=1):
     """Simular el movimiento de los vehículos disponibles y actualizar su ubicación cada X segundos"""
     while True:
+        
         recursos = obtener_recursos_disponibles()
         print(f"🔄 Moviendo {len(recursos)} recursos...")
 
         mensajes = []
-        for recurso_id, servicio in recursos:
-            base_lat, base_lon = obtener_ubicacion_base(servicio)
-            nueva_lat, nueva_lon = generar_nueva_ubicacion(base_lat, base_lon)
+        for recurso in recursos:
+            nueva_lat, nueva_lon = generar_nueva_ubicacion(recurso[2], recurso[3])
             mensaje = {
-                'recurso_id': recurso_id,
-                'servicio': servicio,
+                'recurso_id': recurso[0],
+                'servicio':  recurso[1],
                 'latitud': nueva_lat,
                 'longitud': nueva_lon,
                 'timestamp_ubicacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S")

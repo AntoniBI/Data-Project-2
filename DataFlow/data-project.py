@@ -53,20 +53,23 @@ class Asignacion(beam.DoFn):
                     id_asignados.add(id(match_evento))
                 
                 if id(emergencia) not in id_asignados:
-                    yield beam.pvalue.TaggedOutput("No Match", (emergencia))
+                    yield beam.pvalue.TaggedOutput("NoMatch", (emergencia))
 
 def run():
     with beam.Pipeline(options=PipelineOptions(streaming=True, save_main_session=True)) as p:
+        fixed_window = beam.window.FixedWindows(300)
         
         emergencia_nueva = (
             p 
             | "ReadFromPubSubEvent1" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/emergencias_events-sub')
+            | "Ventana noMatch Nueva" >> beam.WindowInto(fixed_window)
             
         )
-
+       
         no_match= (
             p
             | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/no_matched-sub')
+            | "Ventana Emergencia Nueva" >> beam.WindowInto(fixed_window)
         )
 
         evenetos_emergencias = (
@@ -74,9 +77,11 @@ def run():
             | "Flatten Emergencias" >> beam.Flatten()
             | "Decode msg 1" >> beam.Map(decode_message)
             | "Combine 1" >> beam.Map(lambda x: (x['servicio'], x))
-            | "Filter Null Emergencias" >> beam.Filter(lambda x: x is not None)
-            | "Fixed Window 1" >> beam.WindowInto(beam.window.SlidingWindows(60, 10))
-        )
+            | "Filter Null Emergencias" >> beam.Filter(lambda x: x is not None) 
+            | "Fixed Window 1" >> beam.WindowInto(fixed_window))
+            
+           
+        
 
         eventos_vehiculo = ( 
             p 
@@ -84,45 +89,53 @@ def run():
             | "Decode msg 2" >> beam.Map(decode_message)
             | "Combine 2" >> beam.Map(lambda x: (x['servicio'], x))
             | "Filter Null vehículos" >> beam.Filter(lambda x: x is not None)
-            | "Fixed Window 2" >> beam.WindowInto(beam.window.SlidingWindows(60, 10))
-            
+            | "Fixed Window 2" >> beam.WindowInto(fixed_window)
         )
 
         grouped_data = (
-            eventos_vehiculo, evenetos_emergencias) | "Merge PCollections" >> beam.CoGroupByKey()
+            eventos_vehiculo, evenetos_emergencias) | "Agrupacion PCollections" >> beam.CoGroupByKey()  
+        
+        
         
         
         processed_data = (grouped_data
             | "Calcular Coef y partir en 3 pcollections" >> beam.ParDo(CalcularCoeficiente()).with_outputs("Bomberos", "Policia", "Ambulancia"))
         
+        
+        
         bomberos = processed_data.Bomberos
+        bomberos | "Print Bomberos" >> beam.Map(print)
         policias = processed_data.Policia
+        policias | "Print pol" >> beam.Map(print)
         ambulancias = processed_data.Ambulancia
+        ambulancias | "Print amb" >> beam.Map(print)
 
-        asignacion_bomb = (
-            bomberos
-            | "Asignación de Bomberos" >> beam.ParDo(Asignacion()).with_outputs("Match", "No Match")
-            )
-        asignacion_pol = (
-            policias
-            | "Asignación de Policias" >> beam.ParDo(Asignacion()).with_outputs("Match", "No Match")
-            )
-        asignacion_amb = (
-            ambulancias
-            | "Asignación de Ambulancias" >> beam.ParDo(Asignacion()).with_outputs("Match", "No Match")
-            )
+        # asignacion_bomb = (
+        #     bomberos
+        #     | "Asignación de Bomberos" >> beam.ParDo(Asignacion()).with_outputs("Match", "NoMatch")
+        #     )
+        # asignacion_pol = (
+        #     policias
+        #     | "Asignación de Policias" >> beam.ParDo(Asignacion()).with_outputs("Match", "NoMatch")
+        #     )
+        # asignacion_amb = (
+        #     ambulancias
+        #     | "Asignación de Ambulancias" >> beam.ParDo(Asignacion()).with_outputs("Match", "NoMatch")
+        #     )
 
-        all_no_matches = (
-                (asignacion_bomb.NoMatch, asignacion_pol.NoMatch, asignacion_amb.NoMatch)
-                | "Flatten No Matches" >> beam.Flatten()
-            )
+        # all_no_matches = (
+        #         (asignacion_bomb.NoMatch, asignacion_pol.NoMatch, asignacion_amb.NoMatch)
+        #         | "Flatten No Matches" >> beam.Flatten()
+        #     )
 
-        all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched")
+        # all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched")
 
-        all_matches = (
-                (asignacion_bomb.Match, asignacion_pol.Match, asignacion_amb.Match)
-                | "Flatten Matches" >> beam.Flatten()
-            )
-        # Escribir en BigQuery los all matches. Pensar que hacer con los no matches.
+        # all_matches = (
+        #         (asignacion_bomb.Match, asignacion_pol.Match, asignacion_amb.Match)
+        #         | "Flatten Matches" >> beam.Flatten()
+        #     )
+        
+        # all_matches | "Print Matches" >> beam.Map(print)
+        # # Escribir en BigQuery los all matches. Pensar que hacer con los no matches.
 
 run()
