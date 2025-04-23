@@ -15,7 +15,7 @@ resource "null_resource" "docker_build" {
 }
 
 resource "google_cloud_run_v2_job" "run_job" {
-  name     = "str-image"
+  name     = "str-image-job-generador-emergencias"
   location = "europe-southwest1"
   project = "splendid-strand-452918-e6"
 
@@ -38,9 +38,10 @@ resource "google_cloud_run_v2_job" "run_job" {
   depends_on = [null_resource.docker_build]
 }
 
+
 resource "null_resource" "execute_run_job" {
   provisioner "local-exec" {
-    command = "gcloud run jobs execute str-image --region=europe-southwest1 --project=splendid-strand-452918-e6"
+    command = "gcloud run jobs execute str-image-job-generador-emergencias --region=europe-southwest1 --project=splendid-strand-452918-e6"
   }
 
   depends_on = [google_cloud_run_v2_job.run_job]

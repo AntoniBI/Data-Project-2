@@ -12,7 +12,8 @@ DB_CONFIG = {
     'port': '5432',
 }
 
-API_URL = 'http://localhost:8082/api/update-location'
+API_URL = os.environ.get("api_url")
+
 
 
 def conectar_db():
@@ -66,7 +67,7 @@ def generar_nueva_ubicacion(base_lat, base_lon):
 def enviar_a_api(mensaje_dict):
     """Enviar los datos de ubicación a la API"""
     try:
-        response = requests.post(API_URL, json=mensaje_dict)
+        response = requests.post(f"{API_URL}/api/update-location", json=mensaje_dict)
         response.raise_for_status()
         print(f"✔️ Enviado a API: {mensaje_dict}")
     except requests.exceptions.RequestException as e:
