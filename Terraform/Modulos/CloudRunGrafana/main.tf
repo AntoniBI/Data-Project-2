@@ -1,34 +1,87 @@
-resource "google_cloud_run_service" "run-grafana" {
+# Terraform para desplegar Grafana en Cloud Run con acceso a BigQuery sin key.json
+
+provider "google" {
+  project = var.project_id
+  region  = var.region
+}
+
+# 1. Crear cuenta de servicio para Grafana
+resource "google_service_account" "grafana_sa" {
+  account_id   = "grafana-sa"
+  display_name = "Grafana Service Account"
+}
+
+# 2. Asignar roles necesarios para acceder a BigQuery
+resource "google_project_iam_member" "grafana_bigquery_viewer" {
+  project = var.project_id
+  role    = "roles/bigquery.dataViewer"
+  member  = "serviceAccount:${google_service_account.grafana_sa.email}"
+}
+
+resource "google_project_iam_member" "grafana_bigquery_jobuser" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.grafana_sa.email}"
+}
+
+# 3. Crear repositorio en Artifact Registry (si no existe)
+resource "google_artifact_registry_repository" "grafana_repo" {
+  format       = "DOCKER"
+  location     = var.region
+  repository_id = "data-project-repo5"
+}
+
+# 4. Construir imagen Docker y subirla (requiere carpeta grafana/ con Dockerfile y provisioning, sin key.json)
+resource "null_resource" "build_and_push_image" {
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      cd grafana && \
+      docker build --no-cache --platform=linux/amd64 -t grafana-bq . && \
+      docker tag grafana-bq ${google_artifact_registry_repository.grafana_repo.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.grafana_repo.repository_id}/grafana-bq:latest && \
+      docker push ${google_artifact_registry_repository.grafana_repo.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.grafana_repo.repository_id}/grafana-bq:latest
+    EOT
+  }
+}
+
+# 5. Desplegar Grafana en Cloud Run con cuenta de servicio personalizada
+resource "google_cloud_run_service" "grafana" {
   name     = "grafana"
-  location = "europe-southwest1"
+  location = var.region
+  depends_on = [null_resource.build_and_push_image]
 
   template {
     spec {
+      service_account_name = google_service_account.grafana_sa.email
       containers {
-        image = " europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-repo/str-image@sha256:c58c75ea983420b652da957a5f3db5541aa32a3c1d7ca1b5e489a4200d4bdc98"
-
+        image = "${google_artifact_registry_repository.grafana_repo.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.grafana_repo.repository_id}/grafana-bq:latest"
         ports {
           container_port = 3000
-        }
-
-        env {
-          name  = "PORT"
-          value = "3000"
         }
       }
     }
   }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+}
+# 6. Hacer Grafana accesible públicamente
+resource "google_cloud_run_service_iam_policy" "grafana_public" {
+  location = google_cloud_run_service.grafana.location
+  service  = google_cloud_run_service.grafana.name
+
+  policy_data = data.google_iam_policy.grafana_invoker.policy_data
 }
 
-resource "google_cloud_run_service_iam_policy" "public_access" {
-  service     = google_cloud_run_service.run-grafana.name
-  location    = google_cloud_run_service.run-grafana.location
-  policy_data = data.google_iam_policy.public_iam_policy.policy_data
-}
-
-data "google_iam_policy" "public_iam_policy" {
+data "google_iam_policy" "grafana_invoker" {
   binding {
     role    = "roles/run.invoker"
     members = ["allUsers"]
   }
 }
+
