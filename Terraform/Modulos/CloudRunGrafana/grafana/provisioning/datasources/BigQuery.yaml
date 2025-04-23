@@ -1,0 +1,24 @@
+apiVersion: 1
+
+datasources:
+  - name: BigQuery
+    type: grafana-bigquery-datasource
+    access: proxy
+    isDefault: true
+    editable: true
+    jsonData:
+      authenticationType: gce
+      defaultProject: splendid-strand-452918-e6
+
+
+
+
+
+   
+
+
+
+
+
+
+
