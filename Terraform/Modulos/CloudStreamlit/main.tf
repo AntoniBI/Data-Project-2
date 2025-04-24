@@ -165,3 +165,4 @@ resource "null_resource" "allow_unauthenticated_access" {
 
   depends_on = [google_cloud_run_service.run-streamlit]
 }
+
