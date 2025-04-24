@@ -13,7 +13,7 @@ resource "google_bigquery_dataset" "emergencia-eventos" {
 
 resource "google_bigquery_table" "emergencias" {
   dataset_id = google_bigquery_dataset.emergencia-eventos.dataset_id
-  table_id   = "emergencias-macheada"
+  table_id   = "emergencias-macheadas"
 
   schema = <<EOF
 [
@@ -36,7 +36,7 @@ EOF
 
 resource "google_bigquery_table" "emergencias" {
   dataset_id = google_bigquery_dataset.emergencia-eventos.dataset_id
-  table_id   = "emergencias-macheada"
+  table_id   = "emergencias-no-macheadas"
 
   schema = <<EOF
 [
@@ -45,14 +45,7 @@ resource "google_bigquery_table" "emergencias" {
   {"name": "lat_evento", "type": "FLOAT64"},
   {"name": "lon_evento", "type": "FLOAT64"},
   {"name": "timestamp_evento", "type": "TIMESTAMP"},
-  {"name": "recurso_id", "type": "STRING"},
-  {"name": "servicio_recurso", "type": "STRING"},
-  {"name": "lat_recurso", "type": "FLOAT64"},
-  {"name": "lon_recurso", "type": "FLOAT64"},
-  {"name": "timestamp_ubicacion", "type": "TIMESTAMP"}
   {"name": "coeficiente", "type": "FLOAT64"}
-  {"name": "tiempo_total", "type": "FLOAT64"}
-  {"name": "distancia_recorrida" , "type": "FLOAT64"}
 ]
 EOF
 }

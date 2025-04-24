@@ -114,6 +114,10 @@
 # }
 
 
+
+
+
+
 resource "null_resource" "docker_build" {
   provisioner "local-exec" {
     command = <<EOL
