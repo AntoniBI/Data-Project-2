@@ -1,17 +1,8 @@
-# Terraform para desplegar Grafana en Cloud Run con acceso a BigQuery sin key.json
-
-provider "google" {
-  project = var.project_id
-  region  = var.region
-}
-
-# 1. Crear cuenta de servicio para Grafana
 resource "google_service_account" "grafana_sa" {
   account_id   = "grafana-sa"
   display_name = "Grafana Service Account"
 }
 
-# 2. Asignar roles necesarios para acceder a BigQuery
 resource "google_project_iam_member" "grafana_bigquery_viewer" {
   project = var.project_id
   role    = "roles/bigquery.dataViewer"
@@ -24,14 +15,13 @@ resource "google_project_iam_member" "grafana_bigquery_jobuser" {
   member  = "serviceAccount:${google_service_account.grafana_sa.email}"
 }
 
-# 3. Crear repositorio en Artifact Registry (si no existe)
 resource "google_artifact_registry_repository" "grafana_repo" {
   format       = "DOCKER"
   location     = var.region
   repository_id = "data-project-repo5"
 }
 
-# 4. Construir imagen Docker y subirla (requiere carpeta grafana/ con Dockerfile y provisioning, sin key.json)
+
 resource "null_resource" "build_and_push_image" {
   triggers = {
     always_run = timestamp()
@@ -47,7 +37,6 @@ resource "null_resource" "build_and_push_image" {
   }
 }
 
-# 5. Desplegar Grafana en Cloud Run con cuenta de servicio personalizada
 resource "google_cloud_run_service" "grafana" {
   name     = "grafana"
   location = var.region
@@ -70,7 +59,8 @@ resource "google_cloud_run_service" "grafana" {
     latest_revision = true
   }
 }
-# 6. Hacer Grafana accesible públicamente
+
+
 resource "google_cloud_run_service_iam_policy" "grafana_public" {
   location = google_cloud_run_service.grafana.location
   service  = google_cloud_run_service.grafana.name
