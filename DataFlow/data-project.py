@@ -4,16 +4,23 @@ from apache_beam.runners.interactive.interactive_runner import InteractiveRunner
 import apache_beam.runners.interactive.interactive_beam as ib
 from apache_beam.options.pipeline_options import PipelineOptions
 import json
+from google.cloud.sql.connector import Connector
 
 # Set Logs
 
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-# Suppress Apache Beam logs
 logging.getLogger("apache_beam").setLevel(logging.WARNING)
+
+
+DB_CONFIG = {
+    'dbname': 'recursos-emergencia',
+    'user': 'vehiculos',
+    'password': 'admin123',
+    'port': '5432',
+}
 
 def decode_and_timestamp_event(msg):
     data = decode_message(msg)
@@ -36,6 +43,8 @@ def decode_message(msg):
     output = msg.decode('utf-8')
 
     return json.loads(output)
+def encode_message(msg):
+    return json.dumps(msg).encode('utf-8')
 
 class CalcularCoeficiente(beam.DoFn):
     def process(self, mensaje):
@@ -60,20 +69,44 @@ class CalcularCoeficiente(beam.DoFn):
 class Asignacion(beam.DoFn):
     def process(self, mensaje):
         vehiculos, emergencias = mensaje
-        id_asignados = set()
+        match_list_id=[]
         if emergencias and vehiculos:
-            print(emergencias)
             numero_posiciones=len(emergencias[0]["coeficientes"])
-            for emergencia in emergencias:
-                for i in range(numero_posiciones):
-                    match_evento = max(emergencias, key=lambda x: x["coeficientes"][i])
+            for i in range(numero_posiciones):
+                candidatos = [] 
+                for emergencia in emergencias:
+                    if emergencia["evento_id"] not in match_list_id:
+                        candidatos.append(emergencia)
+                if candidatos:
+                    match_evento = max(candidatos, key=lambda x: x["coeficientes"][i])
                     match_evento["coeficiente_seleccionado"] = match_evento["coeficientes"][i]
-                    match_evento.pop("coeficientes", None)
+                    match_list_id.append(match_evento["evento_id"])
                     yield beam.pvalue.TaggedOutput("Match", (vehiculos[i], match_evento))
-                    id_asignados.add(id(match_evento))
-                
-                if id(emergencia) not in id_asignados:
+            for emergencia in emergencias:
+                if emergencia["evento_id"] not in match_list_id:
                     yield beam.pvalue.TaggedOutput("NoMatch", (emergencia))
+
+class ActualizarUbicacion(beam.DoFn):
+    def process(self, recurso_id):
+
+        try:
+            connector = Connector()
+            
+            conn = connector.connect(
+                "splendid-strand-452918-e6:europe-southwest1:recursos",  
+                "pg8000",  
+                user=DB_CONFIG['user'],
+                password=DB_CONFIG['password'],
+                db=DB_CONFIG['dbname'],
+            )
+            cur = conn.cursor()
+            cur.execute("UPDATE recursos SET asignado = TRUE WHERE recurso_id = %s;", (recurso_id,))
+            cur.close()
+            conn.close()
+            logging.info(f"Ubicación actualizada para recurso_id: {recurso_id}")
+        except Exception as e:
+            logging.error(f"Error al actualizar la ubicación para recurso_id {recurso_id}: {e}")
+        
 
 def run():
     with beam.Pipeline(options=PipelineOptions(streaming=True, save_main_session=True)) as p:
@@ -81,13 +114,14 @@ def run():
         
         emergencia_nueva = (
             p 
-            | "ReadFromPubSubEvent1" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/emergencias_events-sub')
+            | "ReadFromPubSubEvent1" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/emergencias_events-sub'
             
-        )
+        ))
        
         no_match= (
             p
             | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/no_matched-sub')
+            | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"No match Emergencia: {x}"))
         )
 
         eventos_emergencias = (
@@ -144,19 +178,25 @@ def run():
             | "Asignación de Ambulancias" >> beam.ParDo(Asignacion()).with_outputs("Match", "NoMatch")
             )
 
-        # all_no_matches = (
-        #         (asignacion_bomb.NoMatch, asignacion_pol.NoMatch, asignacion_amb.NoMatch)
-        #         | "Flatten No Matches" >> beam.Flatten()
-        #     )
+        all_no_matches = (
+                (asignacion_bomb.NoMatch, asignacion_pol.NoMatch, asignacion_amb.NoMatch)
+                | "Flatten No Matches" >> beam.Flatten()
+                | "Encode No Matches" >> beam.Map(encode_message)
+            )
 
-        # all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched")
+        all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched")
+        all_no_matches | "Print No Matches" >> beam.Map(lambda x: logging.info(f"No Match: {x}"))
 
         all_matches = (
                 (asignacion_bomb.Match, asignacion_pol.Match, asignacion_amb.Match)
                 | "Flatten Matches" >> beam.Flatten()
             )
+        all_matches | "print matches" >> beam.Map(lambda x: logging.info(f"Match: {x}"))
         
-        all_matches | "Print Matches" >> beam.Map(lambda x: logging.info(f"Match: {x}"))
+        recurso_ids = all_matches | "Obtener recurso_id" >> beam.Map(lambda x: x[0]["recurso_id"])
+        recurso_ids | "Print Recurso ID" >> beam.Map(lambda x: logging.info(f"Recurso ID: {x}"))
+        recurso_ids | "Actualizar asignado" >> beam.ParDo(ActualizarUbicacion())
+
        # Escribir en BigQuery los all matches. Pensar que hacer con los no matches.
 
 run()
