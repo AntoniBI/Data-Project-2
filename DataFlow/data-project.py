@@ -69,25 +69,53 @@ class CalcularCoeficiente(beam.DoFn):
 class Asignacion(beam.DoFn):
     def process(self, mensaje):
         vehiculos, emergencias = mensaje
-        match_list_id=[]
-        if emergencias and vehiculos:
-            numero_posiciones=len(emergencias[0]["coeficientes"])
-            for i in range(numero_posiciones):
-                candidatos = [] 
-                for emergencia in emergencias:
-                    if emergencia["evento_id"] not in match_list_id:
-                        candidatos.append(emergencia)
-                if candidatos:
-                    match_evento = max(candidatos, key=lambda x: x["coeficientes"][i])
-                    match_evento["coeficiente_seleccionado"] = match_evento["coeficientes"][i]
-                    match_list_id.append(match_evento["evento_id"])
-                    yield beam.pvalue.TaggedOutput("Match", (vehiculos[i], match_evento))
+        match_list_emergencias_id=[]
+        match_list_vehiculos_id=[]
+        # if emergencias and vehiculos:
+        #     numero_posiciones=len(emergencias[0]["coeficientes"])
+        #     for i in range(numero_posiciones):
+        #         candidatos = [] 
+        #         for emergencia in emergencias:
+        #             if emergencia["evento_id"] not in match_list_id:
+        #                 candidatos.append(emergencia)
+                # if candidatos:
+                #     match_evento = max(candidatos, key=lambda x: x["coeficientes"][i])
+                #     match_evento["coeficiente_seleccionado"] = match_evento["coeficientes"][i]
+                #     match_list_id.append(match_evento["evento_id"])
+                #     yield beam.pvalue.TaggedOutput("Match", (vehiculos[i], match_evento))
+        while True:
+            max_total=0
+            indice_max=0
+            i_max=0
+            recursos_disp=[]
+            candidatos = []
             for emergencia in emergencias:
-                if emergencia["evento_id"] not in match_list_id:
-                    yield beam.pvalue.TaggedOutput("NoMatch", (emergencia))
+                if emergencia["evento_id"] not in match_list_emergencias_id:
+                    candidatos.append(emergencia)
+            for vehiculo in vehiculos:
+                if vehiculo["recurso_id"] not in match_list_vehiculos_id:
+                    recursos_disp.append(vehiculo)
+            if not candidatos or not recursos_disp:
+                break
+            for i, emergencia in enumerate(candidatos):
+                max_list=max(emergencia["coeficientes"])
+                indice=emergencia["coeficientes"].index(max_list)
+                if max_total < max_list and vehiculos[indice] in recursos_disp:
+                    max_total=max_list
+                    indice_max=indice
+                    i_max=i
+            match_evento=emergencias[i_max]
+            match_evento["coeficiente_seleccionado"] = max_total
+            match_list_emergencias_id.append(match_evento["evento_id"])
+            match_list_vehiculos_id.append(vehiculos[indice_max]["recurso_id"])
+            yield beam.pvalue.TaggedOutput("Match", (vehiculos[indice_max], match_evento))
+                     
+        for emergencia in emergencias:
+            if emergencia["evento_id"] not in match_list_emergencias_id:
+                yield beam.pvalue.TaggedOutput("NoMatch", (emergencia))
 
 class ActualizarUbicacion(beam.DoFn):
-    def process(self, recurso_id):
+    def process(self, recurso):
 
         try:
             connector = Connector()
@@ -100,12 +128,13 @@ class ActualizarUbicacion(beam.DoFn):
                 db=DB_CONFIG['dbname'],
             )
             cur = conn.cursor()
-            cur.execute("UPDATE recursos SET asignado = TRUE WHERE recurso_id = %s;", (recurso_id,))
+            cur.execute("UPDATE recursos SET asignado = TRUE WHERE recurso_id = %s;", (recurso["recurso_id"],))
+            cur.execute("UPDATE recursos SET longitud = %s WHERE recurso_id = %s;", (recurso["lon"], recurso["recurso_id"],))
+            cur.execute("UPDATE recursos SET latitud = %s WHERE recurso_id = %s;", (recurso["lat"], recurso["recurso_id"],))
             cur.close()
             conn.close()
-            logging.info(f"Ubicación actualizada para recurso_id: {recurso_id}")
         except Exception as e:
-            logging.error(f"Error al actualizar la ubicación para recurso_id {recurso_id}: {e}")
+            logging.error(f"Error al actualizar la ubicación para recurso_id {recurso["recurso_id"]}: {e}")
         
 
 def run():
@@ -127,10 +156,9 @@ def run():
         eventos_emergencias = (
             (emergencia_nueva, no_match)
             | "Flatten Emergencias" >> beam.Flatten()
+            | "Filter Null Emergencias" >> beam.Filter(lambda x: x is not None) 
             | "Decode + Timestamp Emergencias" >> beam.Map(decode_and_timestamp_event)
             # | "Combine 1" >> beam.Map(lambda x: (x['servicio'], x))
-            | "Map to Key-Value Emergencias" >> beam.Map(lambda x: (x[0], x[1]))
-            | "Filter Null Emergencias" >> beam.Filter(lambda x: x[0] or x[1] is not None) 
             | "Fixed Window 1" >> beam.WindowInto(fixed_window)
             )
             
@@ -140,10 +168,9 @@ def run():
         eventos_vehiculo = ( 
             p 
             | "ReadFromPubSubEvent2" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/emergencias_ubi_autos-sub')
+            | "Filter Null vehículos" >> beam.Filter(lambda x: x is not None)
             | "Decode + Timestamp Vehículos" >> beam.Map(decode_and_timestamp_vehicle)
             # | "Combine 2" >> beam.Map(lambda x: (x['servicio'], x))
-            | "Map to Key-Value vehiculos" >> beam.Map(lambda x: (x[0], x[1]))
-            | "Filter Null vehículos" >> beam.Filter(lambda x: x[0] or x[1] is not None)
             | "Fixed Window 2" >> beam.WindowInto(fixed_window)
 
         )
@@ -192,11 +219,24 @@ def run():
                 | "Flatten Matches" >> beam.Flatten()
             )
         all_matches | "print matches" >> beam.Map(lambda x: logging.info(f"Match: {x}"))
+        # all_matches | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+        #         table=f"{project_id}:{dataset_id}.{table_id}",
+        #         schema= (
+        #                 "servicio:STRING,"
+        #                 "tipo:STRING,"
+        #                 "discapacidad:STRING,"
+        #                 "nivel_emergencia:STRING,"
+        #                 "lat:STRING,"
+        #                 "lon:STRING"
+        #         ),
+                    
+                
+        #         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+        #     )
         
-        recurso_ids = all_matches | "Obtener recurso_id" >> beam.Map(lambda x: x[0]["recurso_id"])
-        recurso_ids | "Print Recurso ID" >> beam.Map(lambda x: logging.info(f"Recurso ID: {x}"))
+        recurso_ids = all_matches | "Obtener emergencia match" >> beam.Map(lambda x: x[0])
         recurso_ids | "Actualizar asignado" >> beam.ParDo(ActualizarUbicacion())
 
-       # Escribir en BigQuery los all matches. Pensar que hacer con los no matches.
 
 run()
