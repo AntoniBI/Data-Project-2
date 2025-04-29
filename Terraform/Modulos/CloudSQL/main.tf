@@ -48,7 +48,7 @@ PGPASSWORD=${var.db_password} psql \
   -U ${var.db_user} \
   -d ${var.db_name} \
   -p 5432 \
-  -f init.sql
+  -f ${path.module}/init.sql
 EOT
     environment = {
       PGPASSWORD = var.db_password

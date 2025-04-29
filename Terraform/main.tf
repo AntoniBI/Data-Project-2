@@ -12,7 +12,7 @@ module "artifact_registry" {
 }
 
 module "bigquery" {
-  source     = "./Modulos/Bigquery"
+  source     = "./Modulos/BigQuery"
   project_id = "splendid-strand-452918-e6"
   region     = "europe-southwest1"
 }
@@ -23,10 +23,32 @@ module "pubsub" {
   region     = "europe-southwest1"
 }
 
-# module "cloud_run_service" {
-#   source       = "./Modulos/cloud_run_service"
-#   project_id   = "splendid-strand-452918-e6"
-#   region       = "europe-southwest1"
-#   service_name = "str-service"
-#   image_url    = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-api:latest"
-# }
+module "clousql" {
+  source     = "./Modulos/CloudSQL"
+  project_id = "splendid-strand-452918-e6"
+  region     = "europe-southwest1"
+  db_name    = "recursos-emergencia"
+  db_user    = "vehiculos"
+  db_password    = "admin123"
+  
+}
+module "cloud_run_api" {
+  source       = "./Modulos/CloudApi"
+  project_id   = "splendid-strand-452918-e6"
+  region       = "europe-southwest1"
+  service_name = "str-service"
+  image_url    = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-api:latest"
+}
+
+module "cloud_run_streamlit" {
+  source     = "./Modulos/CloudStreamlit"
+  project_id = "splendid-strand-452918-e6"
+  region     = "europe-southwest1"
+  service_name = "str-streamlit"
+  api_url    = "https://str-service-puifiielba-no.a.run.app"
+  image_url = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-streamlit:latest"
+}
+
+
+
+
