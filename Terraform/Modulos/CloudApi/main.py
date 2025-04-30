@@ -2,8 +2,14 @@ import os
 import json
 from flask import Flask, request, jsonify
 from google.cloud import pubsub_v1
+# from google.cloud import bigquery
 
 app = Flask(__name__)
+
+# bq_client = bigquery.Client()
+
+# BQ_DATASET = os.environ.get("BQ_DATASET", "emergencias_eventos")
+# BQ_TABLE = os.environ.get("BQ_TABLE", "emergencias-macheadas")
 
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "splendid-strand-452918-e6")
 HELP_TOPIC_ID = os.environ.get("PUBSUB_TOPIC_ID", "emergencias_events")

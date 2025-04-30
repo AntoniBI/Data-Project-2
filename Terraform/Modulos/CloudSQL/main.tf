@@ -42,13 +42,13 @@ resource "google_sql_user" "usuario" {
 resource "null_resource" "init_sql" {
   provisioner "local-exec" {
     command = <<EOT
-sleep 60
+sleep 30
 PGPASSWORD=${var.db_password} psql \
   -h ${google_sql_database_instance.emergencias.public_ip_address} \
   -U ${var.db_user} \
   -d ${var.db_name} \
   -p 5432 \
-  -f init.sql
+  -f ${path.module}/init.sql
 EOT
     environment = {
       PGPASSWORD = var.db_password
