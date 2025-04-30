@@ -102,7 +102,7 @@ resource "null_resource" "build_and_push_image" {
 
   provisioner "local-exec" {
     command = <<EOT
-      cd grafana && \
+      cd /Users/antonimollabenavent/Desktop/EDEM/Data-Project-2/Terraform/Modulos/CloudRunGrafana/grafana && \
       docker build --no-cache --platform=linux/amd64 -t grafana-bq . && \
       docker tag grafana-bq ${var.region}-docker.pkg.dev/${var.project_id}/data-project-2/grafana-bq:latest && \
       docker push ${var.region}-docker.pkg.dev/${var.project_id}/data-project-2/grafana-bq:latest
