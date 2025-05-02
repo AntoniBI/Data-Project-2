@@ -1,6 +1,6 @@
 provider "google" {
-    project = "splendid-strand-452918-e6"
-    region  = "europe-southwest1"
+    project = var.project_id
+    region  = var.region
     zone    = "europe-southwest1-a"
   
 }
@@ -49,6 +49,8 @@ resource "google_bigquery_table" "emergencias-no-macheadas" {
 ]
 EOF
 }
+
+
 
 
 
