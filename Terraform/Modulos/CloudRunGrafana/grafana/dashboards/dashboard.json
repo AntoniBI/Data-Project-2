@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -242,196 +242,6 @@
         "type": "grafana-bigquery-datasource",
         "uid": "P0871A590F805E5CD"
       },
-      "description": "Tiempo en segundos",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "id": 3,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  servicio_evento,\n  AVG(tiempo_total) AS tiempo_promedio,\n  MAX(tiempo_total) AS tiempo_max,\n  MIN(tiempo_total) AS tiempo_min\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento;\n",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Tiempo de Respuesta",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "description": "Recorrido expresado en km",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      },
-      "id": 4,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "WITH promedios_por_recurso AS (\n  SELECT\n    recurso_id,\n    AVG(distancia_recorrida) AS distancia_promedio_km\n  FROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\n  GROUP BY recurso_id\n)\n\nSELECT\n  AVG(distancia_promedio_km) AS media_global_distancia_promedio\nFROM promedios_por_recurso;\n",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Recorrido Medio",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -461,10 +271,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 16,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 8
       },
       "id": 5,
       "options": {
@@ -569,17 +379,120 @@
         "type": "grafana-bigquery-datasource",
         "uid": "P0871A590F805E5CD"
       },
+      "description": "Tiempo en segundos",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
             }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": 1,
+          "location": "",
+          "project": "splendid-strand-452918-e6",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  servicio_evento,\n  AVG(tiempo_total) AS tiempo_promedio,\n  MAX(tiempo_total) AS tiempo_max,\n  MIN(tiempo_total) AS tiempo_min\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento;\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Tiempo de Respuesta",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-bigquery-datasource",
+        "uid": "P0871A590F805E5CD"
+      },
+      "description": "Recorrido expresado en km",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
@@ -603,71 +516,21 @@
         "x": 12,
         "y": 16
       },
-      "id": 6,
+      "id": 4,
       "options": {
-        "controls": {
-          "mouseWheelZoom": true,
-          "showAttribution": true,
-          "showDebug": false,
-          "showMeasure": false,
-          "showScale": false,
-          "showZoom": true
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "layers": [
-          {
-            "config": {
-              "showLegend": true,
-              "style": {
-                "color": {
-                  "fixed": "dark-green"
-                },
-                "opacity": 0.4,
-                "rotation": {
-                  "fixed": 0,
-                  "max": 360,
-                  "min": -360,
-                  "mode": "mod"
-                },
-                "size": {
-                  "fixed": 5,
-                  "max": 15,
-                  "min": 2
-                },
-                "symbol": {
-                  "fixed": "img/icons/marker/circle.svg",
-                  "mode": "fixed"
-                },
-                "symbolAlign": {
-                  "horizontal": "center",
-                  "vertical": "center"
-                },
-                "textConfig": {
-                  "fontSize": 12,
-                  "offsetX": 0,
-                  "offsetY": 0,
-                  "textAlign": "center",
-                  "textBaseline": "middle"
-                }
-              }
-            },
-            "location": {
-              "mode": "auto"
-            },
-            "name": "Layer 1",
-            "tooltip": true,
-            "type": "markers"
-          }
-        ],
-        "tooltip": {
-          "mode": "details"
-        },
-        "view": {
-          "allLayers": true,
-          "id": "zero",
-          "lat": 0,
-          "lon": 0,
-          "zoom": 1
-        }
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
       "pluginVersion": "11.6.0",
       "targets": [
@@ -677,7 +540,7 @@
           "location": "",
           "project": "splendid-strand-452918-e6",
           "rawQuery": true,
-          "rawSql": "SELECT\n  recurso_id,\n  servicio_recurso,\n  lat_recurso AS latitude,\n  lon_recurso AS longitude,\n  timestamp_ubicacion\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\n",
+          "rawSql": "WITH promedios_por_recurso AS (\n  SELECT\n    recurso_id,\n    AVG(distancia_recorrida) AS distancia_promedio_km\n  FROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\n  GROUP BY recurso_id\n)\n\nSELECT\n  AVG(distancia_promedio_km) AS media_global_distancia_promedio\nFROM promedios_por_recurso;\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -698,8 +561,8 @@
           }
         }
       ],
-      "title": "Localización Emergencias",
-      "type": "geomap"
+      "title": "Recorrido Medio",
+      "type": "gauge"
     }
   ],
   "preload": false,
