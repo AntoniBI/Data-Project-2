@@ -150,7 +150,7 @@ def formatear_para_bigquery(vehiculo, evento):
         "tiempo_total": evento["tiempo_total"],
         "tiempo_respuesta": evento["tiempo_respuesta"],
         "distancia_recorrida": evento["distancia_recorrida"],
-        "disponible_en": evento["disponible_en"].astimezone(timezone.utc)
+        "disponible_en": evento["disponible_en"].astimezone(timezone.utc).isoformat()
 
     }
 
@@ -377,9 +377,9 @@ def run():
         all_matches | "Asignar recurso" >> beam.ParDo(ActualizarSQL())
 
 
-        all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery(*x))
-        all_matches | "Write to BigQuery" >> beam.io.WriteToBigQuery(
-                table=f"splendid-strand-452918-e6:emergencia_eventos.emergencias_macheadas",
+        formatear = all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery(*x))
+        formatear | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+                table=f"splendid-strand-452918-e6:emergencia_eventos.emergencias-macheadas",
                 schema= (
                         "recurso_id:STRING,"
                         "servicio_recurso:STRING,"
