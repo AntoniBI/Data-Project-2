@@ -133,25 +133,25 @@ def calculo_coeficiente(vehiculo, emergencia):
 def formatear_para_bigquery(vehiculo, evento):
     return {
         "recurso_id": vehiculo["recurso_id"],
-        "vehiculo_servicio": vehiculo["servicio"],
-        "vehiculo_latitud": vehiculo["latitud"],
-        "vehiculo_longitud": vehiculo["longitud"],
+        "servicio_recurso": vehiculo["servicio"],
+        "lat_recurso": vehiculo["latitud"],
+        "lon_recurso": vehiculo["longitud"],
         "timestamp_ubicacion": vehiculo["timestamp_ubicacion"],
 
         "evento_id": evento["evento_id"],
         "timestamp_evento": evento["timestamp_evento"],
-        "evento_servicio": evento["servicio"],
+        "servicio_evento": evento["servicio"],
         "tipo": evento["tipo"],
-        "discapacidad": evento["discapacidad"],
+        "descapacidad": evento["discapacidad"],
         "nivel_emergencia": evento["nivel_emergencia"],
-        "evento_lat": evento["lat"],
-        "evento_lon": evento["lon"],
-        "coeficientes": evento["coeficientes"],
+        "lat_evento": evento["lat"],
+        "lon_evento": evento["lon"],
         "coeficiente_seleccionado": evento["coeficiente_seleccionado"],
         "tiempo_total": evento["tiempo_total"],
         "tiempo_respuesta": evento["tiempo_respuesta"],
         "distancia_recorrida": evento["distancia_recorrida"],
-        "disponible_en": evento["disponible_en"].isoformat()
+        "disponible_en": evento["disponible_en"].astimezone(timezone.utc)
+
     }
 
 
@@ -213,7 +213,6 @@ class Asignacion(beam.DoFn):
             match_evento["tiempo_respuesta"] = tiempo_dist[1]
             match_evento["distancia_recorrida"] = tiempo_dist[3]
             match_evento["disponible_en"] = datetime.now(timezone.utc) + timedelta(minutes=match_evento["tiempo_total"])
-            logging.info(f"disponible en: {match_evento['disponible_en']}")
 
             match_list_emergencias_id.append(match_evento["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
@@ -378,32 +377,34 @@ def run():
         all_matches | "Asignar recurso" >> beam.ParDo(ActualizarSQL())
 
 
-        # all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery(*x))
-        # all_matches | "Write to BigQuery" >> beam.io.WriteToBigQuery(
-        #         table=f"splendid-strand-452918-e6: emergencias_eventos.emergencias_macheadas",
-        #         schema= (
-        #                 "recurso_id:STRING",
-        #                 "servicio_recurso:STRING,"
-        #                 "lat_recurso:FLOAT,"
-        #                 "lon_recurso:FLOAT,"
-        #                 "timestamp_ubicacion:TIMESTAMP,"
-
-        #                 "evento_id:STRING,"
-        #                 "timestamp_evento:TIMESTAMP,"
-        #                 "servicio_evento:STRING,"
-        #                 "lat_evento:FLOAT,"
-        #                 "lon_evento:FLOAT,"
-                        
-                        
-        #                 "coeficiente:FLOAT,"
-        #                 "tiempo_total:FLOAT,"
-        #                 "distancia_recorrida:FLOAT,"
-        #         ),
+        all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery(*x))
+        all_matches | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+                table=f"splendid-strand-452918-e6:emergencia_eventos.emergencias_macheadas",
+                schema= (
+                        "recurso_id:STRING,"
+                        "servicio_recurso:STRING,"
+                        "lat_recurso:FLOAT,"
+                        "lon_recurso:FLOAT,"
+                        "timestamp_ubicacion:TIMESTAMP,"
+                        "evento_id:STRING,"
+                        "timestamp_evento:TIMESTAMP,"
+                        "servicio_evento:STRING,"
+                        "tipo:STRING,"
+                        "descapacidad:STRING,"
+                        "nivel_emergencia:STRING,"
+                        "lat_evento:FLOAT,"
+                        "lon_evento:FLOAT,"
+                        "coeficiente_seleccionado:FLOAT,"
+                        "tiempo_total:FLOAT,"
+                        "tiempo_respuesta:FLOAT,"
+                        "distancia_recorrida:FLOAT,"
+                        "disponible_en:TIMESTAMP"
+                ),
                     
                 
-        #         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
-        #     )
+                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+            )
         
 
         matches_clave = all_matches | "Con clave" >> beam.Map(lambda x: (x[0]["recurso_id"], x[1]["disponible_en"]))
