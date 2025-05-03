@@ -10,12 +10,12 @@ resource "null_resource" "docker_build" {
 
 resource "google_cloud_run_service" "run-streamlit" {
   name     = "str-image-web-streamlit"
-  location = "europe-southwest1"
+  location = var.region
 
   template {
     spec {
       containers {
-        image = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-streamlit:latest"
+        image = var.image_url
         
         env {
           name  = "api_url"
