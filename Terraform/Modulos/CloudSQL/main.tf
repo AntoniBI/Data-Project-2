@@ -12,7 +12,7 @@ resource "google_sql_database_instance" "emergencias" {
     tier = "db-f1-micro"
     availability_type = "ZONAL"
     disk_size       = 100 
-    # deletion_protection = false
+    
 
     ip_configuration {
       ipv4_enabled = true

@@ -10,13 +10,13 @@ resource "null_resource" "docker_build" {
 
 resource "google_cloud_run_v2_job" "run_job" {
   name     = "str-image-job-generador-ubicaciones"
-  location = "europe-southwest1"
-  project  = "splendid-strand-452918-e6"
+  location = var.region
+  project  = var.project_id
 
   template {
     template {
       containers {
-        image = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-ubicaciones:latest"
+        image = var.image_url
 
         env {
           name  = "api_url"
