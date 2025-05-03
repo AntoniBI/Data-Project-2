@@ -130,6 +130,30 @@ def calculo_coeficiente(vehiculo, emergencia):
 
     return round(coeficiente, 4), tiempo_respuesta, tiempo_total, distancia_metros
 
+def formatear_para_bigquery(vehiculo, evento):
+    return {
+        "recurso_id": vehiculo["recurso_id"],
+        "vehiculo_servicio": vehiculo["servicio"],
+        "vehiculo_latitud": vehiculo["latitud"],
+        "vehiculo_longitud": vehiculo["longitud"],
+        "timestamp_ubicacion": vehiculo["timestamp_ubicacion"],
+
+        "evento_id": evento["evento_id"],
+        "timestamp_evento": evento["timestamp_evento"],
+        "evento_servicio": evento["servicio"],
+        "tipo": evento["tipo"],
+        "discapacidad": evento["discapacidad"],
+        "nivel_emergencia": evento["nivel_emergencia"],
+        "evento_lat": evento["lat"],
+        "evento_lon": evento["lon"],
+        "coeficientes": evento["coeficientes"],
+        "coeficiente_seleccionado": evento["coeficiente_seleccionado"],
+        "tiempo_total": evento["tiempo_total"],
+        "tiempo_respuesta": evento["tiempo_respuesta"],
+        "distancia_recorrida": evento["distancia_recorrida"],
+        "disponible_en": evento["disponible_en"].isoformat()
+    }
+
 
 class CalcularCoeficiente(beam.DoFn):
     def process(self, mensaje):
@@ -158,7 +182,7 @@ class Asignacion(beam.DoFn):
 
         while True:
             max_total = -1
-            mejor_emergencia = None
+            match_evento = None
             mejor_vehiculo = None
             i_emergencia = -1
             i_vehiculo = -1
@@ -174,27 +198,27 @@ class Asignacion(beam.DoFn):
                     coef = emergencia["coeficientes"][idx_v]
                     if coef > max_total:
                         max_total = coef
-                        mejor_emergencia = emergencia
+                        match_evento = emergencia
                         mejor_vehiculo = vehiculo
                         i_emergencia = idx_e
                         i_vehiculo = idx_v
 
-            if mejor_emergencia is None or mejor_vehiculo is None:
-                break  # Ya no hay emparejamientos posibles
+            if match_evento is None or mejor_vehiculo is None:
+                break  
 
             # Añadir información al match
-            mejor_emergencia["coeficiente_seleccionado"] = max_total
-            tiempo_dist = calculo_coeficiente(mejor_vehiculo, mejor_emergencia)
-            mejor_emergencia["tiempo_total"] = tiempo_dist[2]
-            mejor_emergencia["tiempo_respuesta"] = tiempo_dist[1]
-            mejor_emergencia["distancia_recorrida"] = tiempo_dist[3]
-            mejor_emergencia["disponible_en"] = datetime.now() + timedelta(minutes=mejor_emergencia["tiempo_total"])
-            logging.info(f"disponible en: {mejor_emergencia['disponible_en']}")
+            match_evento["coeficiente_seleccionado"] = max_total
+            tiempo_dist = calculo_coeficiente(mejor_vehiculo, match_evento)
+            match_evento["tiempo_total"] = tiempo_dist[2]
+            match_evento["tiempo_respuesta"] = tiempo_dist[1]
+            match_evento["distancia_recorrida"] = tiempo_dist[3]
+            match_evento["disponible_en"] = datetime.now(timezone.utc) + timedelta(minutes=match_evento["tiempo_total"])
+            logging.info(f"disponible en: {match_evento['disponible_en']}")
 
-            match_list_emergencias_id.append(mejor_emergencia["evento_id"])
+            match_list_emergencias_id.append(match_evento["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
 
-            yield beam.pvalue.TaggedOutput("Match", (mejor_vehiculo, mejor_emergencia))
+            yield beam.pvalue.TaggedOutput("Match", (mejor_vehiculo, match_evento))
 
         # Emitir emergencias sin emparejar
         for emergencia in emergencias:
@@ -304,8 +328,8 @@ def run():
 
         )
 
-        # eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
-        # eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
+        eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
+        eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
 
         grouped_data = ((eventos_emergencias, eventos_vehiculo) 
                         | "Agrupacion PCollections" >> beam.CoGroupByKey()
@@ -344,6 +368,7 @@ def run():
             )
 
         all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched2")
+        all_no_matches | "Print No Matches" >> beam.Map(lambda x: logging.info(f"No Match: {x}"))
 
         all_matches = (
                 (asignacion_bomb.Match, asignacion_pol.Match, asignacion_amb.Match)
@@ -351,19 +376,25 @@ def run():
             )
         all_matches | "print matches" >> beam.Map(lambda x: logging.info(f"Match: {x}"))
         all_matches | "Asignar recurso" >> beam.ParDo(ActualizarSQL())
+
+
+        # all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery(*x))
         # all_matches | "Write to BigQuery" >> beam.io.WriteToBigQuery(
         #         table=f"splendid-strand-452918-e6: emergencias_eventos.emergencias_macheadas",
         #         schema= (
-        #                 "evento_id:STRING,"
-        #                 "servicio_evento:STRING,"
-        #                 "lat_evento:FLOAT,"
-        #                 "lon_evento:FLOAT,"
-        #                 "timestamp_evento:TIMESTAMP,"
         #                 "recurso_id:STRING",
         #                 "servicio_recurso:STRING,"
         #                 "lat_recurso:FLOAT,"
         #                 "lon_recurso:FLOAT,"
         #                 "timestamp_ubicacion:TIMESTAMP,"
+
+        #                 "evento_id:STRING,"
+        #                 "timestamp_evento:TIMESTAMP,"
+        #                 "servicio_evento:STRING,"
+        #                 "lat_evento:FLOAT,"
+        #                 "lon_evento:FLOAT,"
+                        
+                        
         #                 "coeficiente:FLOAT,"
         #                 "tiempo_total:FLOAT,"
         #                 "distancia_recorrida:FLOAT,"
