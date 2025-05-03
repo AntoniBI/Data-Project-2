@@ -135,7 +135,8 @@ def obtener_recursos_disponibles():
     conn = conectar_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT * FROM recursos WHERE asignado = FALSE
+        SELECT recurso_id, servicio, latitud, longitud FROM recursos WHERE asignado = FALSE
+
     """)
     recursos = cur.fetchall()
     cur.close()
