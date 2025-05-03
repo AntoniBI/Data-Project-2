@@ -106,9 +106,9 @@ def calculo_coeficiente(vehiculo, emergencia):
     distancia_score = 1 / (1 + distancia_metros)
     
     if servicio == "Policia":
-        tiempo_respuesta =  distancia_metros / 15*60  # Velocidad promedio de un vehículo de policia en m/s, pasado a minutos
+        tiempo_respuesta =  distancia_metros / (15*60)  # Velocidad promedio de un vehículo de policia en m/s, pasado a minutos
     else:
-        tiempo_respuesta =  distancia_metros / 11*60  # Velocidad promedio de un vehículo de bomberos o ambulancia en m/s, pasado a minutos
+        tiempo_respuesta =  distancia_metros / (11*60)  # Velocidad promedio de un vehículo de bomberos o ambulancia en m/s, pasado a minutos
 
     tiempo_total+=tiempo_respuesta
     
@@ -189,6 +189,7 @@ class Asignacion(beam.DoFn):
             mejor_emergencia["tiempo_respuesta"] = tiempo_dist[1]
             mejor_emergencia["distancia_recorrida"] = tiempo_dist[3]
             mejor_emergencia["disponible_en"] = datetime.now() + timedelta(minutes=mejor_emergencia["tiempo_total"])
+            logging.info(f"disponible en: {mejor_emergencia['disponible_en']}")
 
             match_list_emergencias_id.append(mejor_emergencia["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
@@ -236,8 +237,7 @@ class LiberarRecurso(beam.DoFn):
                 expiry_timer=beam.DoFn.TimerParam(EXPIRY_TIMER)):
         recurso_id, tiempo = element
         buffer_state.add(str(recurso_id))
-        if tiempo.tzinfo is None:
-            tiempo = tiempo.replace(tzinfo=timezone.utc)
+        
         expiry_timer.set(tiempo)
     @on_timer(EXPIRY_TIMER)
     def expiry(self, buffer_state=beam.DoFn.StateParam(BUFFER_STATE)):
@@ -304,23 +304,23 @@ def run():
 
         )
 
-        eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
-        eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
+        # eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
+        # eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
 
         grouped_data = ((eventos_emergencias, eventos_vehiculo) 
                         | "Agrupacion PCollections" >> beam.CoGroupByKey()
                         )
-        grouped_data | "Print Grouped Data" >> beam.Map(lambda x: logging.info(f"Grouped Data: {x}"))
+        # grouped_data | "Print Grouped Data" >> beam.Map(lambda x: logging.info(f"Grouped Data: {x}"))
                           
         processed_data = (grouped_data
             | "Calcular Coef y partir en 3 pcollections" >> beam.ParDo(CalcularCoeficiente()).with_outputs("Bomberos", "Policia", "Ambulancia"))
 
         bomberos = processed_data.Bomberos
-        bomberos | "Print Bomberos" >> beam.Map(lambda x: logging.info(f"Bomberos: {x}"))
+        # bomberos | "Print Bomberos" >> beam.Map(lambda x: logging.info(f"Bomberos: {x}"))
         policias = processed_data.Policia
-        policias | "Print Policias" >> beam.Map(lambda x: logging.info(f"Policias: {x}"))
+        # policias | "Print Policias" >> beam.Map(lambda x: logging.info(f"Policias: {x}"))
         ambulancias = processed_data.Ambulancia
-        ambulancias | "Print Ambulancias" >> beam.Map(lambda x: logging.info(f"Ambulancias: {x}"))
+        # ambulancias | "Print Ambulancias" >> beam.Map(lambda x: logging.info(f"Ambulancias: {x}"))
         
 
         asignacion_bomb = (
