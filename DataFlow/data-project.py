@@ -6,6 +6,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 import json
 import math
 from google.cloud.sql.connector import Connector
+import time
 from zoneinfo import ZoneInfo
 
 
@@ -26,9 +27,12 @@ DB_CONFIG = {
     'port': '5432',
 }
 
-def incrementar_no_matched(x):
-    x["no_matched"] = x.get("no_matched", 0) + 1
-    return x
+def incrementar_no_matched(evento):
+    # evento = json.loads(evento.decode("utf-8")) if isinstance(evento, bytes) else evento
+    evento['no_matched_count'] = evento.get('no_matched_count', 0) + 1
+    # Actualiza el timestamp con el tiempo real actual para forzar avance
+    evento['timestamp_evento'] = datetime.now(ZoneInfo("Europe/Madrid")).strftime("%Y-%m-%d %H:%M:%S")
+    return evento
 
 def decode_and_timestamp_event(msg):
     data = decode_message(msg)
@@ -281,7 +285,7 @@ class LiberarRecurso(beam.DoFn):
         stored_test_state.add(str(recurso_id))
         tiempo_float=tiempo.timestamp()
         timer.set(tiempo_float)
-        logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
+        # logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
 
     @beam_state.on_timer(TIMER)
     def expiry(self, buffer = beam.DoFn.StateParam(TEST_STATE), timer = beam.DoFn.TimerParam(TIMER)):
@@ -303,7 +307,7 @@ class LiberarRecurso(beam.DoFn):
                 password=DB_CONFIG['password'],
                 db=DB_CONFIG['dbname'],
             )
-            logging.info(f"Recurso_id {vehiculo_id} liberado")
+            # logging.info(f"Recurso_id {vehiculo_id} liberado")
             cur = conn.cursor()
             cur.execute("UPDATE recursos SET asignado = FALSE WHERE recurso_id = %s;", (vehiculo_id,))
             conn.commit() 
@@ -320,19 +324,21 @@ def run():
         emergencia_nueva = (
             p 
             | "ReadFromPubSubEvent1" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/emergencias_events2-sub')
-            
+            | "Decode + Timestamp Emergencias" >> beam.Map(decode_and_timestamp_event)
         )
        
         no_match= (
             p
             | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/no_matched2-sub')
+            | "Decode no_match" >> beam.Map(decode_and_timestamp_event)  # decode aquí
+            
+
         )
 
         eventos_emergencias = (
             (emergencia_nueva, no_match)
             | "Flatten Emergencias" >> beam.Flatten()
-            | "Filter Null Emergencias" >> beam.Filter(lambda x: x is not None) 
-            | "Decode + Timestamp Emergencias" >> beam.Map(decode_and_timestamp_event)
+            # | "Filter Null Emergencias" >> beam.Filter(lambda x: x is not None) 
             # | "Combine 1" >> beam.Map(lambda x: (x['servicio'], x))
             | "Fixed Window 1" >> beam.WindowInto(fixed_window)
             )
@@ -350,8 +356,10 @@ def run():
 
         )
 
+        no_match | "print no_match" >> beam.Map(lambda x: logging.info(f"No Match leido del subs: {x}"))
+
         # eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
-        # eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
+        eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
 
         grouped_data = ((eventos_emergencias, eventos_vehiculo) 
                         | "Agrupacion PCollections" >> beam.CoGroupByKey()
@@ -390,7 +398,7 @@ def run():
             )
 
         all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched2")
-        all_no_matches | "Print No Matches" >> beam.Map(lambda x: logging.info(f"No Match: {x}"))
+        all_no_matches | "Print No Matches" >> beam.Map(lambda x: logging.info(f"No Match enviado al topic: {x}"))
 
         all_matches = (
                 (asignacion_bomb.Match, asignacion_pol.Match, asignacion_amb.Match)
