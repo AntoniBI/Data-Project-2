@@ -11,7 +11,7 @@ variable "project_id" {
 variable "region" {
   description = "Región de GCP donde se desplegarán los recursos"
   type        = string
-  default = "europe-southwest"
+  default = "europe-southwest1"
 }
 
 variable "service_name" {
