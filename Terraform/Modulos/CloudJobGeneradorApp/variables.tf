@@ -17,7 +17,7 @@ variable "region" {
 variable "service_name" {
   description = "Nombre del job o servicio de Cloud Run"
   type        = string
-  default = "str-generator"
+  default = "str-image-job-generador-emergencias"
 }
 
 variable "image_url" {
