@@ -50,8 +50,13 @@ resource "google_bigquery_table" "emergencias-no-macheadas" {
   {"name": "servicio_evento", "type": "STRING"},
   {"name": "lat_evento", "type": "FLOAT64"},
   {"name": "lon_evento", "type": "FLOAT64"},
+  {"name": "tipo", "type": "STRING"},
+  {"name": "discapacidad", "type": "STRING"},
+  {"name": "nivel_emergencia", "type": "STRING"},
+  {"name": "edad", "type": "INTEGER"},
   {"name": "timestamp_evento", "type": "TIMESTAMP"},
-  {"name": "coeficiente", "type": "FLOAT64"}
+  {"name": "coeficientes", "type": "FLOAT64"}
+  {"name": "no_mached_count", "type": "INTEGER"}
 ]
 EOF
 }
