@@ -54,9 +54,9 @@ module "cloud_run_job_generador" {
   source     = "./Modulos/CloudJobGeneradorApp"
   project_id = "splendid-strand-452918-e6"
   region     = "europe-southwest1"
-  service_name   = "str-generador"
+  service_name   = "str-image-job-generador-emergencias"
   api_url = "https://str-service-puifiielba-no.a.run.app"
-  image_url  = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-generador:latest"
+  image_url  = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-generator:latest"
   
   depends_on = [module.cloudsql, module.pubsub]
   

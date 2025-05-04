@@ -6,7 +6,7 @@ from datetime import datetime
 import uuid
 import os
 
-API_URL = os.environ.get("api_url")
+API_URL = "https://str-service-puifiielba-no.a.run.app"
 
 servicios = ["Policia", "Bombero", "Ambulancia"]
  

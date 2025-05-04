@@ -11,17 +11,17 @@ variable "project_id" {
 variable "region" {
   description = "Región de GCP donde se desplegarán los recursos"
   type        = string
-  default = "europe-southwest"
+  default = "europe-southwest1"
 }
 
 variable "service_name" {
   description = "Nombre del job o servicio de Cloud Run"
   type        = string
-  default = "str-generador"
+  default = "str-image-job-generador-emergencias"
 }
 
 variable "image_url" {
   description = "URL de la imagen en Artifact Registry"
   type        = string
-  default = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-generador:latest"
+  default = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-generator:latest"
 }
