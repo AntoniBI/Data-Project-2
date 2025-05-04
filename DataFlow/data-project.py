@@ -6,6 +6,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 import json
 import math
 from google.cloud.sql.connector import Connector
+from zoneinfo import ZoneInfo
 
 
 
@@ -150,7 +151,7 @@ def formatear_para_bigquery(vehiculo, evento):
         "tiempo_total": evento["tiempo_total"],
         "tiempo_respuesta": evento["tiempo_respuesta"],
         "distancia_recorrida": evento["distancia_recorrida"],
-        "disponible_en": evento["disponible_en"].astimezone(timezone.utc).isoformat()
+        "disponible_en": evento["disponible_en"].astimezone(ZoneInfo("Europe/Madrid")).isoformat()
 
     }
 
@@ -212,8 +213,8 @@ class Asignacion(beam.DoFn):
             match_evento["tiempo_total"] = tiempo_dist[2]
             match_evento["tiempo_respuesta"] = tiempo_dist[1]
             match_evento["distancia_recorrida"] = tiempo_dist[3]
-            match_evento["disponible_en"] = datetime.now(timezone.utc) + timedelta(minutes=match_evento["tiempo_total"])
-
+            match_evento["disponible_en"] = datetime.now(ZoneInfo("Europe/Madrid")) + timedelta(minutes=match_evento["tiempo_total"])
+        
             match_list_emergencias_id.append(match_evento["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
 
@@ -248,27 +249,32 @@ class ActualizarSQL(beam.DoFn):
 
 class LiberarRecurso(beam.DoFn):
     from apache_beam.coders import StrUtf8Coder
-    from apache_beam.transforms.userstate import BagStateSpec, TimerSpec, on_timer
     from apache_beam.transforms.timeutil import TimeDomain
     import typing
-    BUFFER_STATE=BagStateSpec('buffer', beam.coders.StrUtf8Coder())
-    EXPIRY_TIMER=TimerSpec('expiry', TimeDomain.WATERMARK)
+    import apache_beam.transforms.userstate as beam_state
+    from apache_beam import coders
+
+    TEST_STATE = beam_state.BagStateSpec('test_events', coders.StrUtf8Coder())        
+    TIMER = beam_state.TimerSpec('timer', beam_state.TimeDomain.REAL_TIME)
 
     def process(self,
                 element: typing.Tuple[int, datetime],
-                buffer_state=beam.DoFn.StateParam(BUFFER_STATE),
-                expiry_timer=beam.DoFn.TimerParam(EXPIRY_TIMER)):
+                stored_test_state=beam.DoFn.StateParam(TEST_STATE),
+                timer = beam.DoFn.TimerParam(TIMER)):
         recurso_id, tiempo = element
-        buffer_state.add(str(recurso_id))
-        
-        expiry_timer.set(tiempo)
-    @on_timer(EXPIRY_TIMER)
-    def expiry(self, buffer_state=beam.DoFn.StateParam(BUFFER_STATE)):
-        vehiculos_ids = buffer_state.read()
+        stored_test_state.add(str(recurso_id))
+        tiempo_float=tiempo.timestamp()
+        timer.set(tiempo_float)
+        logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
+
+    @beam_state.on_timer(TIMER)
+    def expiry(self, buffer = beam.DoFn.StateParam(TEST_STATE), timer = beam.DoFn.TimerParam(TIMER)):
+        vehiculos_ids = buffer.read()
         logging.info(f"Vehiculos a liberar: {vehiculos_ids}")
         for vehiculo_id in vehiculos_ids:
             self.liberar_recurso(int(vehiculo_id))
-        buffer_state.clear()
+        buffer.clear()
+        timer.clear()
 
 
 
@@ -327,8 +333,8 @@ def run():
 
         )
 
-        eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
-        eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
+        # eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
+        # eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
 
         grouped_data = ((eventos_emergencias, eventos_vehiculo) 
                         | "Agrupacion PCollections" >> beam.CoGroupByKey()
