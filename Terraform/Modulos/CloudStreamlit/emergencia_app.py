@@ -5,7 +5,7 @@ import json
 import os
 
 
-API_URL = os.getenv("api_url")
+API_URL = "https://str-service-puifiielba-no.a.run.app"
 
 
 st.title("Emergencias 112 📞")

@@ -12,7 +12,7 @@ DB_CONFIG = {
     'port': '5432',
 }
 
-API_URL = os.environ.get("api_url")
+API_URL = "https://str-service-puifiielba-no.a.run.app"
 
 
 def conectar_db():
