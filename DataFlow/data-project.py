@@ -131,7 +131,7 @@ def calculo_coeficiente(vehiculo, emergencia):
 
     return round(coeficiente, 4), tiempo_respuesta, tiempo_total, distancia_metros
 
-def formatear_para_bigquery(vehiculo, evento):
+def formatear_para_bigquery_matched(vehiculo, evento):
     return {
         "recurso_id": vehiculo["recurso_id"],
         "servicio_recurso": vehiculo["servicio"],
@@ -152,6 +152,22 @@ def formatear_para_bigquery(vehiculo, evento):
         "tiempo_respuesta": evento["tiempo_respuesta"],
         "distancia_recorrida": evento["distancia_recorrida"],
         "disponible_en": evento["disponible_en"].astimezone(ZoneInfo("Europe/Madrid")).isoformat()
+
+    }
+
+def formatear_para_bigquery_no_matched(mensaje):
+    return {
+        "evento_id": mensaje["evento_id"],
+        "timestamp_evento": datetime.strptime(mensaje["timestamp_evento"], "%Y-%m-%d %H:%M:%S").isoformat(),
+        "servicio": mensaje["servicio"],
+        "tipo": mensaje["tipo"],
+        "discapacidad": mensaje["discapacidad"],
+        "nivel_emergencia": mensaje["nivel_emergencia"],
+        "lat": mensaje["lat"],
+        "lon": mensaje["lon"],
+        "edad": mensaje["edad"],
+        "coeficientes": mensaje["coeficientes"],
+        "no_matched_count": mensaje["no_matched_count"]
 
     }
 
@@ -269,8 +285,7 @@ class LiberarRecurso(beam.DoFn):
 
     @beam_state.on_timer(TIMER)
     def expiry(self, buffer = beam.DoFn.StateParam(TEST_STATE), timer = beam.DoFn.TimerParam(TIMER)):
-        vehiculos_ids = buffer.read()
-        logging.info(f"Vehiculos a liberar: {vehiculos_ids}")
+        vehiculos_ids = list(buffer.read())
         for vehiculo_id in vehiculos_ids:
             self.liberar_recurso(int(vehiculo_id))
         buffer.clear()
@@ -288,8 +303,10 @@ class LiberarRecurso(beam.DoFn):
                 password=DB_CONFIG['password'],
                 db=DB_CONFIG['dbname'],
             )
+            logging.info(f"Recurso_id {vehiculo_id} liberado")
             cur = conn.cursor()
             cur.execute("UPDATE recursos SET asignado = FALSE WHERE recurso_id = %s;", (vehiculo_id,))
+            conn.commit() 
             cur.close()
             conn.close()
         except Exception as e:
@@ -383,8 +400,8 @@ def run():
         all_matches | "Asignar recurso" >> beam.ParDo(ActualizarSQL())
 
 
-        formatear = all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery(*x))
-        formatear | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+        formatear_match = all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
+        formatear_match | "Write to BigQuery" >> beam.io.WriteToBigQuery(
                 table=f"splendid-strand-452918-e6:emergencia_eventos.emergencias-macheadas",
                 schema= (
                         "recurso_id:STRING,"
@@ -411,6 +428,30 @@ def run():
                 create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
             )
+        
+        # formatear_no_match = all_no_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery_no_matched(*x))
+        # formatear_no_match | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+        #         table=f"splendid-strand-452918-e6:emergencia_eventos.emergencias-no-macheadas",
+        #         schema= {
+        #             "fields": [
+        #                 {"name": "evento_id", "type": "STRING", "mode": "REQUIRED"},
+        #                 {"name": "timestamp_evento", "type": "TIMESTAMP", "mode": "REQUIRED"},
+        #                 {"name": "servicio", "type": "STRING", "mode": "REQUIRED"},
+        #                 {"name": "tipo", "type": "STRING", "mode": "REQUIRED"},
+        #                 {"name": "discapacidad", "type": "STRING", "mode": "REQUIRED"},
+        #                 {"name": "nivel_emergencia", "type": "STRING", "mode": "REQUIRED"},
+        #                 {"name": "lat", "type": "FLOAT", "mode": "REQUIRED"},
+        #                 {"name": "lon", "type": "FLOAT", "mode": "REQUIRED"},
+        #                 {"name": "edad", "type": "INTEGER", "mode": "REQUIRED"},
+        #                 {"name": "coeficientes", "type": "FLOAT", "mode": "REPEATED"},
+        #                 {"name": "no_matched_count", "type": "INTEGER", "mode": "REQUIRED"},
+        #             ]
+        #         },
+                    
+                
+        #         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+        #     )
         
 
         matches_clave = all_matches | "Con clave" >> beam.Map(lambda x: (x[0]["recurso_id"], x[1]["disponible_en"]))
