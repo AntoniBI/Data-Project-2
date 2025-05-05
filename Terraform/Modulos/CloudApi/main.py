@@ -87,10 +87,27 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import os
 import json
 from flask import Flask, request, jsonify
-from google.cloud import pubsub_v1
+from google.cloud import pubsub_v1, bigquery
 from google.cloud.sql.connector import Connector
 import pg8000
 
@@ -205,6 +222,74 @@ def get_recursos_asignados():
     except Exception as e:
         print(f"Error retrieving assigned resources: {e}")
         return jsonify({"error": "Could not retrieve assigned resources"}), 500
+    
+
+@app.route('/api/estado-evento', methods=['GET'])
+def estado_evento():
+    evento_id = request.args.get('evento_id')
+    if not evento_id:
+        return jsonify({"error": "Parámetro 'evento_id' es obligatorio"}), 400
+
+    client = bigquery.Client(project=PROJECT_ID)
+
+    dataset = "emergencia_eventos"
+    tabla_macheadas = f"`{PROJECT_ID}.{dataset}.emergencias-macheadas`"
+    tabla_no_macheadas = f"`{PROJECT_ID}.{dataset}.emergencias-no-macheadas`"
+
+    try:
+        # Consulta para tabla macheadas
+        query_macheado = f"""
+        SELECT evento_id FROM {tabla_macheadas}
+        WHERE evento_id = @evento_id
+        LIMIT 1
+        """
+        job_macheado = client.query(
+            query_macheado,
+            job_config=bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("evento_id", "STRING", evento_id)
+                ]
+            )
+        )
+        macheado_result = list(job_macheado.result())
+
+        if macheado_result:
+            return jsonify({"evento_id": evento_id, "estado": "macheado"}), 200
+
+        
+        query_no_macheado = f"""
+        SELECT evento_id FROM {tabla_no_macheadas}
+        WHERE evento_id = @evento_id
+        LIMIT 1
+        """
+        job_no_macheado = client.query(
+            query_no_macheado,
+            job_config=bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("evento_id", "STRING", evento_id)
+                ]
+            )
+        )
+        no_macheado_result = list(job_no_macheado.result())
+
+        if no_macheado_result:
+            return jsonify({"evento_id": evento_id, "estado": "no macheado"}), 200
+
+        return jsonify({"evento_id": evento_id, "estado": "no encontrado"}), 404
+
+    except Exception as e:
+        print(f"Error al consultar estado del evento: {e}")
+        return jsonify({"error": "Error al consultar BigQuery"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
+
+
+
+
+
+
+
+
+

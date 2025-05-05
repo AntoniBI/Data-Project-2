@@ -3,6 +3,7 @@ from streamlit_js_eval import streamlit_js_eval
 import requests
 import json
 import os
+from uuid import uuid4
 
 
 API_URL = "https://str-service-puifiielba-no.a.run.app"
@@ -124,4 +125,15 @@ if enviar:
     
     except Exception as e:
         st.error(f"Error al enviar la solicitud: {e}")
+
+
+
+
+
+
+
+
+
+
+
 
