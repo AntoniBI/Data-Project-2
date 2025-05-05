@@ -69,5 +69,5 @@ def enviar_solicitudes(delay=5):
  
 if __name__ == "__main__":
 
-    enviar_solicitudes(delay=5)  
+    enviar_solicitudes(delay=15)  
  
