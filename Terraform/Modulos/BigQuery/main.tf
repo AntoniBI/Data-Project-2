@@ -55,7 +55,7 @@ resource "google_bigquery_table" "emergencias-no-macheadas" {
   {"name": "nivel_emergencia", "type": "STRING"},
   {"name": "edad", "type": "INTEGER"},
   {"name": "timestamp_evento", "type": "TIMESTAMP"},
-  {"name": "coeficientes", "type": "FLOAT64"}
+  {"name": "coeficientes", "type": "FLOAT64"},
   {"name": "no_mached_count", "type": "INTEGER"}
 ]
 EOF
