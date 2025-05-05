@@ -6,6 +6,6 @@ terraform.tfstate.backup
 
 # Local Terraform directories
 .terraform/
-
 venv
-.env
+# Python virtual environment
+env
