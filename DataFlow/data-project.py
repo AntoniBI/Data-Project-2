@@ -335,7 +335,7 @@ def run():
         runner="DataflowRunner",
         temp_location=f"gs://dataflow-staging-europe-southwest1-385129730744/tmp",
         staging_location=f"gs://dataflow-staging-europe-southwest1-385129730744/staging",
-        requirements_file="clean_requirements.txt",
+        requirements_file="requirements.txt",
         region="europe-southwest1")) as p:
         fixed_window = beam.window.FixedWindows(90)
 

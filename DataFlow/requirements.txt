@@ -1,0 +1,4 @@
+
+apache-beam==2.64.0
+
+cloud-sql-python-connector==1.18.1
