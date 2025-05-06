@@ -31,27 +31,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -69,249 +48,28 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 6,
+        "w": 8,
         "x": 0,
         "y": 0
-      },
-      "id": 12,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT *\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\ngroup by servicio_evento;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Panel Title",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  servicio_evento,\n  COUNT(*) AS total_no_macheadas\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-no-macheadas`\nGROUP BY servicio_evento;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Emergencias no macheadas",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
       },
       "id": 13,
       "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
         "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "11.6.0",
       "targets": [
@@ -321,7 +79,7 @@
           "location": "",
           "project": "splendid-strand-452918-e6",
           "rawQuery": true,
-          "rawSql": "SELECT\n  tipo,\n  COUNT(*) AS total_eventos\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nWHERE\n  timestamp_evento >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)\nGROUP BY tipo\nORDER BY total_eventos DESC;\n",
+          "rawSql": "SELECT COUNT(*) AS total FROM `emergencia_eventos.emergencias-macheadas`;\n\n\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -342,118 +100,8 @@
           }
         }
       ],
-      "title": "Emergencias por Tipo",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "description": "Tiempo en segundos",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      },
-      "id": 3,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  servicio_evento,\n  AVG(tiempo_total) AS tiempo_promedio,\n  MAX(tiempo_total) AS tiempo_max,\n  MIN(tiempo_total) AS tiempo_min\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento;\n",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Tiempo de Respuesta",
-      "type": "barchart"
+      "title": "Total emergencias atendidas",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -482,10 +130,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 0
       },
       "id": 11,
       "options": {
@@ -513,7 +161,7 @@
           "location": "",
           "project": "splendid-strand-452918-e6",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COUNT(*) AS eventos_sin_recurso\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nWHERE\n  (recurso_id IS NULL OR recurso_id = \"\")\n  AND timestamp_evento >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR);\n",
+          "rawSql": "SELECT COUNT(*) AS total FROM `emergencia_eventos.emergencias-no-macheadas`;\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -534,335 +182,8 @@
           }
         }
       ],
-      "title": "Emergencias sin recurso asignado",
+      "title": "Emergencias NO atendidas",
       "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "description": "Recorrido expresado en km",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "lengthm"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
-      },
-      "id": 4,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  servicio_evento,\n  ROUND(AVG(distancia_recorrida), 2) AS distancia_media_km\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nWHERE\n  distancia_recorrida IS NOT NULL\nGROUP BY\n  servicio_evento\nORDER BY\n  distancia_media_km DESC;\n",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Recorrido Medio",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "lengthm"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 24
-      },
-      "id": 10,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "WITH distancia_por_recurso_y_servicio AS (\n  SELECT\n    servicio_evento,\n    recurso_id,\n    AVG(distancia_recorrida) AS distancia_promedio_km\n  FROM\n    `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\n  WHERE\n    distancia_recorrida IS NOT NULL\n  GROUP BY\n    servicio_evento, recurso_id\n)\n\nSELECT\n  servicio_evento,\n  ROUND(AVG(distancia_promedio_km), 2) AS distancia_media_por_recurso_km\nFROM\n  distancia_por_recurso_y_servicio\nGROUP BY\n  servicio_evento\nORDER BY\n  distancia_media_por_recurso_km DESC;\n",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Promedio de desplazamiento por recurso",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "id": 7,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  CASE\n    WHEN LOWER(TRIM(servicio_evento)) IN (\"ambulancia\") THEN \"Ambulancia\"\n    WHEN LOWER(TRIM(servicio_evento)) IN (\"bombero\", \"bomberos\") THEN \"Bomberos\"\n    WHEN LOWER(TRIM(servicio_evento)) IN (\"policia\", \"policía\") THEN \"Policía\"\n    ELSE INITCAP(servicio_evento)\n  END AS servicio,\n  ROUND(AVG(tiempo_respuesta), 2) AS tiempo_respuesta_promedio_segundos\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nWHERE\n  tiempo_respuesta IS NOT NULL\n  AND timestamp_evento >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)\nGROUP BY\n  servicio\nORDER BY\n  servicio;\n",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Tiempo de respuesta promedio",
-      "type": "barchart"
     },
     {
       "datasource": {
@@ -892,10 +213,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 33
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 0
       },
       "id": 9,
       "options": {
@@ -923,7 +244,7 @@
           "location": "",
           "project": "splendid-strand-452918-e6",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ROUND(AVG(TIMESTAMP_DIFF(timestamp_ubicacion, timestamp_evento, SECOND)), 2) AS tiempo_asignacion_segundos\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nWHERE\n  timestamp_evento IS NOT NULL\n  AND timestamp_ubicacion IS NOT NULL\n  AND timestamp_evento >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR);\n",
+          "rawSql": "SELECT ROUND(AVG(tiempo_respuesta), 2) AS tiempo_promedio FROM `emergencia_eventos.emergencias-macheadas`;\n\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -944,7 +265,7 @@
           }
         }
       ],
-      "title": "Tiempo medio desde el evento hasta la asignación del recurso",
+      "title": "Tiempo de respuesta promedio",
       "type": "stat"
     },
     {
@@ -955,7 +276,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-greens"
           },
           "custom": {
             "axisBorderShow": false,
@@ -978,114 +299,7 @@
               "mode": "off"
             }
           },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 33
-      },
-      "id": 1,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  servicio_evento,\n  COUNT(*) AS total_macheadas\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Emergencias Macheadas",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1104,12 +318,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 9,
+        "w": 24,
         "x": 0,
-        "y": 41
+        "y": 6
       },
-      "id": 6,
+      "id": 10,
       "options": {
         "barRadius": 0,
         "barWidth": 0.97,
@@ -1121,15 +335,17 @@
           "placement": "bottom",
           "showLegend": true
         },
-        "orientation": "horizontal",
+        "orientation": "auto",
         "showValue": "auto",
         "stacking": "none",
+        "text": {
+          "valueSize": 25
+        },
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
           "sort": "none"
         },
-        "xField": "servicio",
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
@@ -1141,7 +357,7 @@
           "location": "",
           "project": "splendid-strand-452918-e6",
           "rawQuery": true,
-          "rawSql": "SELECT\n  nivel_emergencia,\n  ROUND(AVG(tiempo_respuesta), 2) AS tiempo_respuesta_promedio_segundos\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nWHERE\n  tiempo_respuesta IS NOT NULL\n  AND timestamp_evento >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)\nGROUP BY\n  nivel_emergencia\nORDER BY\n  nivel_emergencia;\n\n\n\n\n\n",
+          "rawSql": "SELECT \n  servicio_evento,\n  ROUND(AVG(tiempo_respuesta), 2) AS tiempo_promedio,\n  MAX(tiempo_respuesta) AS tiempo_max,\n  MIN(tiempo_respuesta) AS tiempo_min\nFROM `emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1162,119 +378,8 @@
           }
         }
       ],
-      "title": "Tiempo medio de respuesta por nivel de emergencia",
+      "title": "Tiempo de respuesta por servicio",
       "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-bigquery-datasource",
-        "uid": "P0871A590F805E5CD"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 41
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": 1,
-          "location": "",
-          "project": "splendid-strand-452918-e6",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  TIMESTAMP_TRUNC(timestamp_evento, MINUTE) AS minuto,\n  COUNT(*) AS total_eventos\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nWHERE\n  timestamp_evento >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)\nGROUP BY\n  minuto\nORDER BY\n  minuto;\n",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Evolución temporal del número de emergencias",
-      "type": "timeseries"
     },
     {
       "datasource": {
@@ -1310,10 +415,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 15,
-        "w": 24,
+        "h": 13,
+        "w": 13,
         "x": 0,
-        "y": 49
+        "y": 15
       },
       "id": 5,
       "options": {
@@ -1395,7 +500,7 @@
           "location": "",
           "project": "splendid-strand-452918-e6",
           "rawQuery": true,
-          "rawSql": "SELECT\n  evento_id,\n  servicio_evento,\n  lat_evento AS latitude,\n  lon_evento AS longitude,\n  timestamp_evento\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\n\nUNION ALL\n\nSELECT\n  evento_id,\n  servicio_evento,\n  lat_evento AS latitude,\n  lon_evento AS longitude,\n  timestamp_evento\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-no-macheadas`\n",
+          "rawSql": "SELECT \n  lat_evento AS latitude,\n  lon_evento AS longitude,\n  servicio_evento\nFROM `emergencia_eventos.emergencias-macheadas`;\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1418,6 +523,226 @@
       ],
       "title": "Localización Emergencias",
       "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "grafana-bigquery-datasource",
+        "uid": "P0871A590F805E5CD"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 11,
+        "x": 13,
+        "y": 15
+      },
+      "id": 6,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.95,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "servicio",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 200
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": 1,
+          "location": "",
+          "project": "splendid-strand-452918-e6",
+          "rawQuery": true,
+          "rawSql": "SELECT servicio_evento, COUNT(*) AS total\nFROM `emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento\n\n\n\n\n\n\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Distribución por servicio de emergencias",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-bigquery-datasource",
+        "uid": "P0871A590F805E5CD"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 11,
+        "x": 13,
+        "y": 21
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": 1,
+          "location": "",
+          "project": "splendid-strand-452918-e6",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  TIMESTAMP_TRUNC(timestamp_evento, MINUTE) AS minuto,\n  COUNT(*) AS total_eventos\nFROM\n  splendid-strand-452918-e6.`emergencia_eventos.emergencias-macheadas`\nWHERE\n  timestamp_evento >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 6 HOUR)\nGROUP BY\n  minuto\nORDER BY\n  minuto;\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Evolución temporal del número de emergencias",
+      "type": "timeseries"
     }
   ],
   "preload": false,
