@@ -107,10 +107,10 @@ resource "null_resource" "allow_unauthenticated_access" {
 depends_on = [google_cloud_run_service.run-streamlit]
 }
 
-# resource "google_cloud_run_service_iam_member" "allow_streamlit_to_call_api" {
-#   location = "europe-southwest1"
-#   service  = "str-service"
-#   role     = "roles/run.invoker"
-#   member   = "serviceAccount:${google_service_account.streamlit_invoker.email}"
+resource "google_cloud_run_service_iam_member" "allow_streamlit_to_call_api" {
+  location = "europe-southwest1"
+  service  = "str-service"
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.streamlit_invoker.email}"
 
-# }
+}
