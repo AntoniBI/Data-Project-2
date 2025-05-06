@@ -15,10 +15,15 @@ El sistema prioriza las solicitudes más críticas y asigna los recursos más ce
 ## ⚙️ Funcionalidades Principales
 
 •⁠  ⁠*📨 Registro de Incidencias*: Formulario para que los ciudadanos reporten situaciones de emergencia.
+
 •⁠  ⁠*🔁 Asignación Inteligente de Recursos*: El sistema distribuye recursos (ambulancias, bomberos, policías) según urgencia, ubicación y disponibilidad.
+
 •⁠  ⁠*📍 Criterio de emparejamiento*: Calculamos un coeficiente haciendo una mezcla entre la urgencia de la emergencia y su proximidad
+
 •⁠  ⁠*⚡ Procesamiento en Tiempo Real*: Pipeline con Apache Beam desplegado en Dataflow.
+
 •⁠  ⁠*📊 Almacenamiento y Visualización*: Registro y análisis de datos en BigQuery y dashboards en Grafana.
+
 •⁠  ⁠*🛠️ Despliegue Automatizado*: Toda la infraestructura está definida como código con Terraform.
 
 ---
