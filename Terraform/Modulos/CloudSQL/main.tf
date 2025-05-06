@@ -3,6 +3,20 @@ provider "google" {
   region  = var.region
 }
 
+resource "google_service_account" "sql_service_account" {
+  account_id   = "sql-service-account"
+  display_name = "SQL Service Account"
+  project      = var.project_id
+}
+
+
+resource "google_project_iam_member" "sql_service_account_member" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.sql_service_account.email}"
+}
+
+
 resource "google_sql_database_instance" "emergencias" {
   name             = "recursos"
   database_version = "POSTGRES_14"

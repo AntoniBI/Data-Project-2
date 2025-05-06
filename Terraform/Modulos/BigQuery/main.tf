@@ -5,6 +5,18 @@ provider "google" {
   
 }
 
+resource "google_service_account" "bigquery_sa" {
+  account_id   = "bigquery-sa"
+  display_name = "BigQuery Service Account"
+  project      = var.project_id
+}
+
+resource "google_project_iam_member" "bigquery_sa_member" {
+  project = var.project_id
+  role    = "roles/bigquery.admin"
+  member  = "serviceAccount:${google_service_account.bigquery_sa.email}"
+}
+
 resource "google_bigquery_dataset" "emergencia-eventos" {
   dataset_id  = "emergencia_eventos"
   project     = var.project_id

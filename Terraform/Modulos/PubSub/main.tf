@@ -3,6 +3,26 @@ provider "google" {
   region  = var.region
 }
 
+
+resource "google_service_account" "pubsub_service_account" {
+  account_id   = "pubsub-service-account"
+  display_name = "Pub/Sub Service Account"
+  project      = var.project_id
+}
+
+resource "google_project_iam_member" "pubsub_publisher" {
+  project = var.project_id
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.pubsub_service_account.email}"
+}
+
+
+resource "google_project_iam_member" "pubsub_subscriber" {
+  project = var.project_id
+  role    = "roles/pubsub.subscriber"
+  member  = "serviceAccount:${google_service_account.pubsub_service_account.email}"
+}
+
 resource "google_pubsub_topic" "data_events" {
   name = "emergencias_events"
 }
