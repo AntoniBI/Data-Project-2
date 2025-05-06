@@ -10,7 +10,8 @@ import time
 from zoneinfo import ZoneInfo
 
 
-
+"""FALTEN ELS REQUIREMENTS Y CAMBIAR ELS TOPICS DE PUBSUB
+APART DE FER MILLOR EL CÓDIG EN VARIABLES DE ENTORNO"""
 # Set Logs
 
 import logging
