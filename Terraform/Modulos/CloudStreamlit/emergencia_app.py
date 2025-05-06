@@ -119,7 +119,7 @@ if enviar:
         res = requests.post(f"{API_URL}/api/request-help", data=json.dumps(payload), headers={"Content-Type": "application/json"})
         
         if res.status_code == 202:
-            st.success("Solicitud enviada con éxito!")
+            st.success("Solicitud enviada con éxito!. La ayuda llegará pronto.")
         else:
             st.error(f"Error al enviar la solicitud. Código de respuesta: {res.status_code}")
     

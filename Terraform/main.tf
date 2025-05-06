@@ -38,6 +38,9 @@ module "cloud_run_api" {
   region       = "europe-southwest1"
   service_name = "str-service"
   image_url    = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-api:latest"
+
+
+  depends_on = [module.pubsub]
 }
 
 module "cloud_run_streamlit" {
@@ -58,7 +61,7 @@ module "cloud_run_job_generador" {
   api_url = "https://str-service-puifiielba-no.a.run.app"
   image_url  = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-generator:latest"
   
-  depends_on = [module.cloudsql, module.pubsub]
+  depends_on = [module.cloudsql, module.pubsub, module.cloud_run_api]
   
 }
 
@@ -71,7 +74,7 @@ module "cloud_run_job_ubicaciones" {
   service_name = "str-ubicaciones"
   image_url  = "europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-ubicaciones:latest"
 
-   depends_on = [module.cloudsql, module.pubsub]
+   depends_on = [module.cloudsql, module.pubsub, module.cloud_run_api]
 
 }
 
@@ -85,4 +88,15 @@ module "cloud_run_grafana" {
 
   depends_on = [module.bigquery]
   
+}
+
+resource "google_cloud_run_service_iam_member" "allow_streamlit_to_call_api" {
+  location = "europe-southwest1"
+  service  = "str-service"
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${module.cloud_run_streamlit.streamlit_invoker_email}"
+
+  depends_on = [
+    module.cloud_run_api,
+    module.cloud_run_streamlit]
 }
