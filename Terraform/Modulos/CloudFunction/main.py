@@ -26,7 +26,7 @@ def get_pubsub_message(cloud_event):
         timestamp_evento = data.get("timestamp_evento", "no indicado")
 
         # Log informativo
-        logging.info(f"📢 El evento {evento_id} ha sido MACHEADO. Recurso asignado: {recurso_id} ({servicio}). Llegará en {tiempo_respuesta} segundos ⏱")
+        logging.info(f"📢 El evento {evento_id} ha sido MACHEADO. Recurso asignado: {recurso_id} ({servicio}). Llegará en {tiempo_respuesta} segundos ⏱. Este evento se genero en {timestamp_evento}, recorrerá uns distancia de {distancia} km hasta el evento. Nivel de emergencia: {nivel_emergencia}.")
 
     except Exception as e:
         logging.error(f"❌ Error procesando mensaje: {e}")
