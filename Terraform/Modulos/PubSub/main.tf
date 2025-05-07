@@ -22,7 +22,7 @@ resource "google_pubsub_subscription" "ubi_autos_sub" {
 }
 
 resource "google_pubsub_topic" "no_matched" {
-  name = "no_matched2"
+  name = "no_matched"
 }
 
 resource "google_pubsub_subscription" "no_matched" {

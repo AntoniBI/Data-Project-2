@@ -8,6 +8,7 @@ import math
 from google.cloud.sql.connector import Connector
 import time
 from zoneinfo import ZoneInfo
+import argparse
 
 
 """FALTEN ELS REQUIREMENTS Y CAMBIAR ELS TOPICS DE PUBSUB
@@ -32,7 +33,7 @@ def incrementar_no_matched(evento):
     # evento = json.loads(evento.decode("utf-8")) if isinstance(evento, bytes) else evento
     evento['no_matched_count'] = evento.get('no_matched_count', 0) + 1
     # Actualiza el timestamp con el tiempo real actual para forzar avance
-    # evento['timestamp_evento'] = datetime.now(ZoneInfo("Europe/Madrid")).strftime("%Y-%m-%d %H:%M:%S")
+    # evento['timestamp_evento'] = datetime.now(("Europe/Madrid")).strftime("%Y-%m-%d %H:%M:%S")
     return evento
 
 def actualizar_timestamp(evento):
@@ -62,6 +63,7 @@ def decode_message(msg):
     output = msg.decode('utf-8')
 
     return json.loads(output)
+
 def encode_message(msg):
     return json.dumps(msg).encode('utf-8')
 
@@ -101,10 +103,10 @@ def calculo_coeficiente(vehiculo, emergencia):
         tiempo_total= 30
     elif nivel_emergencia == "Nivel 2: Emergencia moderada":
         nivel_score= 0.5
-        tiempo_total= 60
+        tiempo_total= 1
     elif nivel_emergencia == "Nivel 3: Emergencia grave":
         nivel_score= 0.8
-        tiempo_total= 120
+        tiempo_total= 1
 
     delta_lat = latitud_emergencia - latitud_vehiculo
     delta_lon = longitud_emergencia - longitud_vehiculo
@@ -154,6 +156,7 @@ def formatear_para_bigquery_matched(vehiculo, evento):
         "timestamp_evento": evento["timestamp_evento"],
         "servicio_evento": evento["servicio"],
         "tipo": evento["tipo"],
+        "edad": evento.get("edad"),
         "descapacidad": evento["discapacidad"],
         "nivel_emergencia": evento["nivel_emergencia"],
         "lat_evento": evento["lat"],
@@ -170,13 +173,13 @@ def formatear_para_bigquery_no_matched(mensaje):
     return {
         "evento_id": mensaje["evento_id"],
         "timestamp_evento": datetime.strptime(mensaje["timestamp_evento"], "%Y-%m-%d %H:%M:%S").isoformat(),
-        "servicio": mensaje["servicio"],
+        "servicio_evento": mensaje["servicio"],
         "tipo": mensaje["tipo"],
+        "edad": mensaje.get("edad"),
         "discapacidad": mensaje["discapacidad"],
         "nivel_emergencia": mensaje["nivel_emergencia"],
-        "lat": mensaje["lat"],
-        "lon": mensaje["lon"],
-        "edad": mensaje["edad"],
+        "lat_evento": mensaje["lat"],
+        "lon_evento": mensaje["lon"],
         "coeficientes": mensaje["coeficientes"],
         "no_matched_count": mensaje["no_matched_count"]
 
@@ -325,29 +328,65 @@ class LiberarRecurso(beam.DoFn):
 
 
 def run():
-    pipeline_options = PipelineOptions()
-    pipeline_options.view_as(StandardOptions).streaming = True
-    with beam.Pipeline(options=PipelineOptions(
-        streaming=True,
-        save_main_session=True,
-        job_name = "dataflow-emergencias-latest",
-        project="splendid-strand-452918-e6",
-        runner="DataflowRunner",
-        temp_location=f"gs://dataflow-staging-europe-southwest1-385129730744/tmp",
-        staging_location=f"gs://dataflow-staging-europe-southwest1-385129730744/staging",
-        requirements_file="requirements.txt",
-        region="europe-southwest1")) as p:
+    """ Input Arguments """
+
+    parser = argparse.ArgumentParser(description=('Input arguments for the Dataflow Streaming Pipeline.'))
+
+    parser.add_argument(
+                '--project_id',
+                required=True,
+                help='GCP cloud project name.')
+    
+    parser.add_argument(
+                '--emergency_events_subscription',
+                required=True,
+                help='PubSub subscription used for reading emergency events data.')
+    
+    parser.add_argument(
+                '--vehicle_subscription',
+                required=True,
+                help='PubSub subscription used for reading vehicles data.')
+    
+    parser.add_argument(
+                '--big_query_dataset',
+                required=True,
+                help='The BQ dataset where the tables will be located.')
+    
+    parser.add_argument(
+                '--big_query_table_matched',
+                required=True,
+                help='The BQ table for the matched data.')
+    
+    parser.add_argument(
+                '--big_query_table_no_matched',
+                required=True,
+                help='The BQ table for the no matched data.')
+    
+    parser.add_argument(
+                '--no_matched_topic',
+                required=False,
+                help='PubSub Topic for sending no_match emergencies.')
+    
+
+    args, pipeline_opts = parser.parse_known_args()
+
+    options = PipelineOptions(pipeline_opts,
+        save_main_session=True, streaming=True, project=args.project_id)
+
+    """Pipeline"""
+
+    with beam.Pipeline(argv=pipeline_opts,options=options) as p:
         fixed_window = beam.window.FixedWindows(90)
 
         emergencia_nueva = (
             p
-            | "ReadFromPubSubEvent1" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/emergencias_events2-sub')
+            | "ReadFromPubSubEvent1" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.emergency_events_subscription}')
             | "Decode + Timestamp Emergencias" >> beam.Map(decode_and_timestamp_event)
         )
 
         no_match= (
             p
-            | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/no_matched2-sub')
+            | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.no_matched_topic}-sub')
             | "Decode no_match" >> beam.Map(decode_and_timestamp_event)
             # | "logging no_match" >> beam.Map(lambda x: logging.info(f"No Match leido del subs: {x}"))
             | "Timestamp no_match" >> beam.Map(actualizar_timestamp)
@@ -368,7 +407,7 @@ def run():
 
         eventos_vehiculo = (
             p
-            | "ReadFromPubSubEvent2" >> beam.io.ReadFromPubSub(subscription=f'projects/splendid-strand-452918-e6/subscriptions/emergencias_ubi_autos2-sub')
+            | "ReadFromPubSubEvent2" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.vehicle_subscription}')
             # | "Filter Null vehículos" >> beam.Filter(lambda x: x is not None)
             | "Decode + Timestamp Vehículos" >> beam.Map(decode_and_timestamp_vehicle)
             # | "Combine 2" >> beam.Map(lambda x: (x['servicio'], x))
@@ -418,7 +457,7 @@ def run():
                 | "Encode No Matches" >> beam.Map(encode_message)
             )
 
-        all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic="projects/splendid-strand-452918-e6/topics/no_matched2")
+        all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.no_matched_topic}")
         all_no_matches | "Print No Matches" >> beam.Map(lambda x: logging.info(f"No Match enviado al topic: {x}"))
 
         all_matches = (
@@ -429,58 +468,58 @@ def run():
         all_matches | "Asignar recurso" >> beam.ParDo(ActualizarSQL())
 
 
-        formatear_match = all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
-        formatear_match | "Write to BigQuery" >> beam.io.WriteToBigQuery(
-                table=f"splendid-strand-452918-e6:emergencia_eventos.emergencias-macheadas",
-                schema= (
-                        "recurso_id:STRING,"
-                        "servicio_recurso:STRING,"
-                        "lat_recurso:FLOAT,"
-                        "lon_recurso:FLOAT,"
-                        "timestamp_ubicacion:TIMESTAMP,"
-                        "evento_id:STRING,"
-                        "timestamp_evento:TIMESTAMP,"
-                        "servicio_evento:STRING,"
-                        "tipo:STRING,"
-                        "descapacidad:STRING,"
-                        "nivel_emergencia:STRING,"
-                        "lat_evento:FLOAT,"
-                        "lon_evento:FLOAT,"
-                        "coeficiente_seleccionado:FLOAT,"
-                        "tiempo_total:FLOAT,"
-                        "tiempo_respuesta:FLOAT,"
-                        "distancia_recorrida:FLOAT,"
-                        "disponible_en:TIMESTAMP"
-                ),
+        # formatear_match = all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
+        # formatear_match | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+        #         table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_matched}",
+        #         schema= (
+        #                 "recurso_id:STRING,"
+        #                 "servicio_recurso:STRING,"
+        #                 "lat_recurso:FLOAT,"
+        #                 "lon_recurso:FLOAT,"
+        #                 "timestamp_ubicacion:TIMESTAMP,"
+        #                 "evento_id:STRING,"
+        #                 "timestamp_evento:TIMESTAMP,"
+        #                 "servicio_evento:STRING,"
+        #                 "tipo:STRING,"
+        #                 "descapacidad:STRING,"
+        #                 "nivel_emergencia:STRING,"
+        #                 "lat_evento:FLOAT,"
+        #                 "edad:FLOAT,"
+        #                 "lon_evento:FLOAT,"
+        #                 "coeficiente_seleccionado:FLOAT,"
+        #                 "tiempo_total:FLOAT,"
+        #                 "tiempo_respuesta:FLOAT,"
+        #                 "distancia_recorrida:FLOAT,"
+        #                 "disponible_en:TIMESTAMP"
+        #         ),
 
 
-                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
-            )
+        #         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+        #     )
 
-        formatear_no_match = all_no_matches | "Formatear a BQ No match" >> beam.Map(lambda x: formatear_para_bigquery_no_matched(x))
-        formatear_no_match | "Write to BigQuery no match" >> beam.io.WriteToBigQuery(
-                table=f"splendid-strand-452918-e6:emergencia_eventos.emergencias-no-macheadas",
-                schema= {
-                    "fields": [
-                        {"name": "evento_id", "type": "STRING", "mode": "REQUIRED"},
-                        {"name": "timestamp_evento", "type": "TIMESTAMP", "mode": "REQUIRED"},
-                        {"name": "servicio", "type": "STRING", "mode": "REQUIRED"},
-                        {"name": "tipo", "type": "STRING", "mode": "REQUIRED"},
-                        {"name": "discapacidad", "type": "STRING", "mode": "REQUIRED"},
-                        {"name": "nivel_emergencia", "type": "STRING", "mode": "REQUIRED"},
-                        {"name": "lat", "type": "FLOAT", "mode": "REQUIRED"},
-                        {"name": "lon", "type": "FLOAT", "mode": "REQUIRED"},
-                        {"name": "edad", "type": "INTEGER", "mode": "REQUIRED"},
-                        {"name": "coeficientes", "type": "FLOAT", "mode": "REPEATED"},
-                        {"name": "no_matched_count", "type": "INTEGER", "mode": "REQUIRED"},
-                    ]
-                },
+        # formatear_no_match = all_no_matches | "Decode" >> beam.Map(decode_message)
+        # formatear_no_match | "Formatear a BQ No match" >> beam.Map(lambda x: formatear_para_bigquery_no_matched(x))
+        # formatear_no_match | "Write to BigQuery no match" >> beam.io.WriteToBigQuery(
+        #         table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_no_matched}",
+        #         schema= (
+        #                 "evento_id:STRING,"
+        #                 "timestamp_evento:TIMESTAMP,"
+        #                 "servicio_evento:STRING,"
+        #                 "tipo:STRING,"
+        #                 "edad:INTEGER,"
+        #                 "discapacidad:STRING,"
+        #                 "nivel_emergencia:STRING,"
+        #                 "lat_evento:FLOAT,"
+        #                 "lon_evento:FLOAT,"
+        #                 "coeficientes:FLOAT REPEATED,"
+        #                 "no_matched_count:INTEGER"
+        #         ),
 
 
-                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
-            )
+        #         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+        #     )
 
 
         matches_clave = all_matches | "Con clave" >> beam.Map(lambda x: (x[0]["recurso_id"], x[1]["disponible_en"]))

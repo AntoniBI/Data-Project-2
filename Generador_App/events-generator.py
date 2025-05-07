@@ -4,6 +4,7 @@ import requests
 import time
 from datetime import datetime
 import uuid
+from zoneinfo import ZoneInfo
 
 
 servicios = ["Policia", "Bombero", "Ambulancia"]
@@ -29,7 +30,7 @@ def generar_dato():
     tipo = random.choice(tipos)
     payload = {
         "evento_id": str(uuid.uuid4())[:8],
-        "timestamp_evento": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp_evento": datetime.now(ZoneInfo("Europe/Madrid")).strftime("%Y-%m-%d %H:%M:%S"),
         "servicio": random.choice(servicios),
         "tipo": tipo,
         "discapacidad": random.choice(discapacidades),
