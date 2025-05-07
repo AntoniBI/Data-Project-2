@@ -4,7 +4,9 @@ import requests
 import time
 from datetime import datetime
 import uuid
+import os
 
+API_URL = "https://str-service-puifiielba-no.a.run.app"
 
 servicios = ["Policia", "Bombero", "Ambulancia"]
  
@@ -50,7 +52,7 @@ def enviar_solicitudes(delay=5):
         try:
 
             res = requests.post(
-                url="http://127.0.0.1:8082/api/request-help",
+                url=f"{API_URL}/api/request-help",
                 data=json.dumps(payload),
                 headers={"Content-Type": "application/json"},
             )
@@ -67,5 +69,5 @@ def enviar_solicitudes(delay=5):
  
 if __name__ == "__main__":
 
-    enviar_solicitudes(delay=5)  
+    enviar_solicitudes(delay=20)  
  
