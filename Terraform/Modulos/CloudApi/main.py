@@ -111,10 +111,9 @@ from google.cloud import pubsub_v1, bigquery
 from google.cloud.sql.connector import Connector
 import pg8000
 
-# Inicializa Flask
+
 app = Flask(__name__)
 
-# Configuración fija (sin variables de entorno)
 PROJECT_ID = "splendid-strand-452918-e6"
 HELP_TOPIC_ID = "emergencias_events"
 LOCATION_TOPIC_ID = "emergencias_ubi_autos"
@@ -127,12 +126,12 @@ DB_CONFIG = {
     'port': '5432',
 }
 
-# Inicializa Pub/Sub
+
 publisher = pubsub_v1.PublisherClient()
 help_topic_path = publisher.topic_path(PROJECT_ID, HELP_TOPIC_ID)
 location_topic_path = publisher.topic_path(PROJECT_ID, LOCATION_TOPIC_ID)
 
-# Inicializa conector de Cloud SQL
+
 connector = Connector()
 
 def get_db_connection():
@@ -237,7 +236,6 @@ def estado_evento():
     tabla_no_macheadas = f"`{PROJECT_ID}.{dataset}.emergencias-no-macheadas`"
 
     try:
-        # Consulta para tabla macheadas
         query_macheado = f"""
         SELECT evento_id FROM {tabla_macheadas}
         WHERE evento_id = @evento_id
