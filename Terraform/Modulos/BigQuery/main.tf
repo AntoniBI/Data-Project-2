@@ -35,7 +35,7 @@ resource "google_bigquery_table" "emergencias" {
   {"name": "lon_evento", "type": "FLOAT64"},
   {"name": "timestamp_evento", "type": "TIMESTAMP"},
   {"name": "tipo", "type": "STRING"},
-  {"name": "descapacidad", "type": "STRING"},
+  {"name": "discapacidad", "type": "STRING"},
   {"name": "nivel_emergencia", "type": "STRING"},
   {"name": "recurso_id", "type": "STRING"},
   {"name": "servicio_recurso", "type": "STRING"},
@@ -43,7 +43,7 @@ resource "google_bigquery_table" "emergencias" {
   {"name": "lat_recurso", "type": "FLOAT64"},
   {"name": "lon_recurso", "type": "FLOAT64"},
   {"name": "timestamp_ubicacion", "type": "TIMESTAMP"},
-  {"name": "coeficiente", "type": "FLOAT64"},
+  {"name": "coeficiente", "type": "FLOAT64", "mode": "REPEATED"},
   {"name": "coeficiente_seleccionado", "type": "FLOAT64"},
   {"name": "tiempo_total", "type": "FLOAT64"},
   {"name": "tiempo_respuesta", "type": "FLOAT64"},
@@ -68,8 +68,8 @@ resource "google_bigquery_table" "emergencias-no-macheadas" {
   {"name": "nivel_emergencia", "type": "STRING"},
   {"name": "edad", "type": "INTEGER"},
   {"name": "timestamp_evento", "type": "TIMESTAMP"},
-  {"name": "coeficientes", "type": "FLOAT64"},
-  {"name": "no_mached_count", "type": "INTEGER"}
+  {"name": "coeficientes", "type": "FLOAT64", "mode": "REPEATED"},
+  {"name": "no_matched_count", "type": "INTEGER"}
 ]
 EOF
 }
