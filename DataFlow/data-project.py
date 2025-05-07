@@ -329,12 +329,12 @@ def run():
     with beam.Pipeline(options=PipelineOptions(
         streaming=True,
         save_main_session=True,
-        job_name = "dataflow-emergencias-latest",
+        job_name = "dataflow-emergencias-latest-v3",
         project="splendid-strand-452918-e6",
         runner="DataflowRunner",
         temp_location=f"gs://dataflow-staging-europe-southwest1-385129730744/tmp",
         staging_location=f"gs://dataflow-staging-europe-southwest1-385129730744/staging",
-        requirements_file="clean_requirements.txt",
+        requirements_file="requirements.txt",
         region="europe-southwest1")) as p:
         fixed_window = beam.window.FixedWindows(90)
 
