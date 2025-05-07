@@ -39,6 +39,7 @@ resource "google_bigquery_table" "emergencias" {
   {"name": "nivel_emergencia", "type": "STRING"},
   {"name": "recurso_id", "type": "STRING"},
   {"name": "servicio_recurso", "type": "STRING"},
+  {"name": "edad", "type": "INTEGER"},
   {"name": "lat_recurso", "type": "FLOAT64"},
   {"name": "lon_recurso", "type": "FLOAT64"},
   {"name": "timestamp_ubicacion", "type": "TIMESTAMP"},
