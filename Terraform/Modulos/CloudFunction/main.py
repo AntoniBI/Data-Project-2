@@ -34,3 +34,4 @@ def get_pubsub_message(cloud_event):
 
     except Exception as e:
         logging.error(f"❌ Error procesando mensaje: {e}")
+
