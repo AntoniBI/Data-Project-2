@@ -383,7 +383,7 @@ class LiberarRecurso(beam.DoFn):
 
     def setup(self):
         connector = Connector()
-        conn = connector.connect(
+        self.conn = connector.connect(
             f"{self.project_id}:{self.mode}:{self.table_sql}",
             "pg8000",
             user=DB_CONFIG['user'],
@@ -391,7 +391,7 @@ class LiberarRecurso(beam.DoFn):
             db=DB_CONFIG['dbname'],
         )
         logging.info(f"Conectado a la base de datos para liberar {self.table_sql} en {self.project_id}")
-        return conn
+        
 
     def process(self,
                 element: typing.Tuple[int, datetime],
@@ -412,16 +412,14 @@ class LiberarRecurso(beam.DoFn):
         timer.clear()
 
 
-    @staticmethod
     def liberar_recurso(self, vehiculo_id: str):
         try:
-            conn= self.setup()
-            cur = conn.cursor()
+            cur = self.conn.cursor()
             cur.execute("UPDATE recursos SET asignado = FALSE WHERE recurso_id = %s;", (vehiculo_id,))
             logging.info(f"Vehiculo {vehiculo_id} liberado en la base de datos")
-            conn.commit()
+            self.conn.commit()
             cur.close()
-            conn.close()
+            self.conn.close()
         except Exception as e:
             logging.error(f"Error al liberar el recurso_id {vehiculo_id}: {e}")
 
@@ -470,6 +468,11 @@ def run():
             '--table_sql',
             required=False,
             help='SQL table where the vehicles are located.')
+    
+    parser.add_argument(
+        '--streamlit_topic',
+        required=False,
+        help='topic to streamlit')
     
 
     args, pipeline_opts = parser.parse_known_args()
@@ -520,6 +523,12 @@ def run():
             (all_no_matches) 
             | "Encode No Matches" >> beam.Map(encode_message)
             | "Send message to Topic" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.no_matched_topic}")
+        )
+
+        write_to_firebase = (
+            (processed_data.Match) 
+            | "Encode Matches" >> beam.Map(encode_message)
+            | "Send message to Topic streamlit" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.streamlit_topic}")
         )
 
         all_matches = (
