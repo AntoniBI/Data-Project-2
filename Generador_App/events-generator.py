@@ -4,10 +4,10 @@ import requests
 import time
 from datetime import datetime
 import uuid
-import os
+from zoneinfo import ZoneInfo
+
 
 API_URL = "https://str-service-puifiielba-no.a.run.app"
-
 servicios = ["Policia", "Bombero", "Ambulancia"]
  
 tipos = ["Individual", "Colectiva"]
@@ -31,7 +31,7 @@ def generar_dato():
     tipo = random.choice(tipos)
     payload = {
         "evento_id": str(uuid.uuid4())[:8],
-        "timestamp_evento": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp_evento": datetime.now(ZoneInfo("Europe/Madrid")).strftime("%Y-%m-%d %H:%M:%S"),
         "servicio": random.choice(servicios),
         "tipo": tipo,
         "discapacidad": random.choice(discapacidades),
@@ -69,5 +69,5 @@ def enviar_solicitudes(delay=5):
  
 if __name__ == "__main__":
 
-    enviar_solicitudes(delay=20)  
+    enviar_solicitudes(delay=5)  
  

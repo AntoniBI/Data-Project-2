@@ -97,7 +97,7 @@ def get_recursos_asignados():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT recurso_id, servicio, latitud, longitud FROM recursos WHERE asignado = TRUE;")
+        cursor.execute("SELECT recurso_id, servicio, latitud, longitud FROM recursos WHERE asignado = false;")
         recursos = cursor.fetchall()
         cursor.close()
         conn.close()
