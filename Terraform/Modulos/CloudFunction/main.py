@@ -16,14 +16,18 @@ def get_pubsub_message(cloud_event):
         
         pubsub_message = base64.b64decode(cloud_event.data["message"]["data"])
         data = json.loads(pubsub_message)
+
+        print(f"📢 Mensaje recibido: {data}")
         
-        evento_id = data["evento_id"]
-        recurso_id = data["recurso_id"]
-        servicio = data["servicio_recurso"]
-        nivel_emergencia = data["nivel_emergencia"]
-        tiempo_respuesta = data["tiempo_respuesta"]
-        distancia = data["distancia_recorrida"]
-        timestamp_evento = data["timestamp_evento", "no indicado"]
+        evento_id = data[1]["evento_id"]
+        recurso_id = data[0]["recurso_id"]
+        servicio = data[0]["servicio_recurso"]
+        nivel_emergencia = data[1]["nivel_emergencia"]
+        tiempo_respuesta = data[1]["tiempo_respuesta"]
+        distancia = data[1]["distancia_recorrida"]
+        timestamp_evento = data[1]["timestamp_evento"]
+
+        
 
      
         logging.info(f"📢 El evento {evento_id} ha sido MACHEADO. Recurso asignado: {recurso_id} ({servicio}). Llegará en {tiempo_respuesta} segundos ⏱. Este evento se genero en {timestamp_evento}, recorrerá uns distancia de {distancia} km hasta el evento. Nivel de emergencia: {nivel_emergencia}.")

@@ -276,7 +276,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-greens"
+            "fixedColor": "semi-dark-red",
+            "mode": "shades"
           },
           "custom": {
             "axisBorderShow": false,
@@ -313,13 +314,13 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "m"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 24,
+        "h": 8,
+        "w": 12,
         "x": 0,
         "y": 6
       },
@@ -358,7 +359,7 @@
           "location": "",
           "project": "splendid-strand-452918-e6",
           "rawQuery": true,
-          "rawSql": "SELECT \n  servicio_evento,\n  ROUND(AVG(tiempo_respuesta), 2) AS tiempo_promedio,\n  MAX(tiempo_respuesta) AS tiempo_max,\n  MIN(tiempo_respuesta) AS tiempo_min\nFROM `emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento\n",
+          "rawSql": "SELECT \n  servicio_evento,\n  ROUND(AVG(tiempo_respuesta), 2) AS tiempo_promedio,\nFROM `emergencia_eventos.emergencias-macheadas`\nGROUP BY servicio_evento\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -381,6 +382,88 @@
       ],
       "title": "Tiempo de respuesta por servicio",
       "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-bigquery-datasource",
+        "uid": "P0871A590F805E5CD"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": 1,
+          "location": "",
+          "project": "splendid-strand-452918-e6",
+          "rawQuery": true,
+          "rawSql": "select AVG(edad)\nFROM `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\n\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Edad Promedio Emergencias",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -419,7 +502,7 @@
         "h": 20,
         "w": 13,
         "x": 0,
-        "y": 15
+        "y": 14
       },
       "id": 5,
       "options": {
@@ -576,7 +659,7 @@
         "h": 6,
         "w": 11,
         "x": 13,
-        "y": 15
+        "y": 14
       },
       "id": 6,
       "options": {
@@ -697,7 +780,7 @@
         "h": 7,
         "w": 11,
         "x": 13,
-        "y": 21
+        "y": 20
       },
       "id": 8,
       "options": {
@@ -788,7 +871,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "m"
         },
         "overrides": []
       },
@@ -796,7 +880,7 @@
         "h": 7,
         "w": 11,
         "x": 13,
-        "y": 28
+        "y": 27
       },
       "id": 14,
       "options": {
@@ -870,3 +954,4 @@
   "uid": "eeknuo4p5fksgb",
   "version": 1
 }
+
