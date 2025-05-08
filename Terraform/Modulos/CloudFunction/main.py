@@ -21,7 +21,7 @@ def get_pubsub_message(cloud_event):
         
         evento_id = data[1]["evento_id"]
         recurso_id = data[0]["recurso_id"]
-        servicio = data[0]["servicio_recurso"]
+        servicio = data[0]["servicio"]
         nivel_emergencia = data[1]["nivel_emergencia"]
         tiempo_respuesta = data[1]["tiempo_respuesta"]
         distancia = data[1]["distancia_recorrida"]
