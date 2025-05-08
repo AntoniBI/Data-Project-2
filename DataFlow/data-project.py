@@ -64,8 +64,12 @@ def decode_message(msg):
 
     return json.loads(output)
 
-def encode_message(msg):
-    return json.dumps(msg).encode('utf-8')
+def encode_message(obj):
+    def convert_datetime(o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        raise TypeError(f'Object of type {o.__class__.__name__} is not JSON serializable')
+    return json.dumps(obj, default=convert_datetime).encode("utf-8")
 
 def calculo_coeficiente(vehiculo, emergencia):
     servicio = emergencia["servicio"]
@@ -145,6 +149,7 @@ def calculo_coeficiente(vehiculo, emergencia):
     return round(coeficiente, 4), tiempo_respuesta, tiempo_total, distancia_metros
 
 def formatear_para_bigquery_matched(vehiculo, evento):
+    logging.info(f"Mensaje para formatear y enviar a BQ match: {vehiculo} {evento}")
     return {
         "recurso_id": vehiculo["recurso_id"],
         "servicio_recurso": vehiculo["servicio"],
@@ -157,7 +162,7 @@ def formatear_para_bigquery_matched(vehiculo, evento):
         "servicio_evento": evento["servicio"],
         "tipo": evento["tipo"],
         "edad": evento.get("edad"),
-        "descapacidad": evento["discapacidad"],
+        "discapacidad": evento["discapacidad"],
         "nivel_emergencia": evento["nivel_emergencia"],
         "lat_evento": evento["lat"],
         "lon_evento": evento["lon"],
@@ -170,6 +175,7 @@ def formatear_para_bigquery_matched(vehiculo, evento):
     }
 
 def formatear_para_bigquery_no_matched(mensaje):
+    logging.info(f"Mensaje para formatear y enviar a BQ no match: {mensaje}")
     return {
         "evento_id": mensaje["evento_id"],
         "timestamp_evento": datetime.strptime(mensaje["timestamp_evento"], "%Y-%m-%d %H:%M:%S").isoformat(),
@@ -186,28 +192,88 @@ def formatear_para_bigquery_no_matched(mensaje):
     }
 
 
-class CalcularCoeficiente(beam.DoFn):
-    def process(self, mensaje):
-        if mensaje is None:
-            return
-        clave, (emergencias, vehiculos) = mensaje
-        for i, emergencia in enumerate(emergencias):
-            coeficinetes_lista = []
-            for vehiculo in vehiculos:
-                coficiente = calculo_coeficiente(vehiculo, emergencia)[0]
-                coeficinetes_lista.append(coficiente)
-            emergencia["coeficientes"]=coeficinetes_lista
+class BussinesLogic(beam.DoFn):
+    @staticmethod
+    def calculo_coeficiente(vehiculo, emergencia):
+        servicio = emergencia["servicio"]
+        tipo_emergencia = emergencia["tipo"]
+        edad=emergencia.get("edad", 0)
+        discapacidad=emergencia["discapacidad"]
+        nivel_emergencia=emergencia["nivel_emergencia"]
+        latitud_emergencia=emergencia["lat"]
+        longitud_emergencia=emergencia["lon"]
+        latitud_vehiculo=vehiculo["latitud"]
+        longitud_vehiculo=vehiculo["longitud"]
 
-        if clave == "Bombero":
-            yield beam.pvalue.TaggedOutput("Bomberos", (vehiculos, emergencias))
-        elif clave == "Policia":
-            yield beam.pvalue.TaggedOutput("Policia", (vehiculos, emergencias))
-        elif clave == "Ambulancia":
-            yield beam.pvalue.TaggedOutput("Ambulancia", (vehiculos, emergencias))
+        if tipo_emergencia == "Individual":
+            tipo_score = 0
+            if edad < 10:
+                tipo_score = 0.5
+            elif edad > 70:
+                tipo_score = 0.5
+        elif tipo_emergencia == "Colectiva":
+            tipo_score = 1.0
 
-class Asignacion(beam.DoFn):
-    def process(self, mensaje):
-        vehiculos, emergencias = mensaje
+        if discapacidad == "Grado 1: Discapacidad nula":
+            disc_score= 0.0
+        elif discapacidad == "Grado 2: Discapacidad leve":
+            disc_score= 0.2
+        elif discapacidad == "Grado 3: Discapacidad moderada":
+            disc_score= 0.4
+        elif discapacidad == "Grado 4: Discapacidad grave":
+            disc_score= 0.6
+        elif discapacidad == "Grado 5: Discapacidad muy grave":
+            disc_score= 0.8
+
+        if nivel_emergencia == "Nivel 1: Emergencia leve":
+            nivel_score= 0.2
+            tiempo_total= 30
+        elif nivel_emergencia == "Nivel 2: Emergencia moderada":
+            nivel_score= 0.5
+            tiempo_total= 1
+        elif nivel_emergencia == "Nivel 3: Emergencia grave":
+            nivel_score= 0.8
+            tiempo_total= 1
+
+        delta_lat = latitud_emergencia - latitud_vehiculo
+        delta_lon = longitud_emergencia - longitud_vehiculo
+        lat_prom = (latitud_vehiculo + latitud_emergencia) / 2
+
+        # Aprox. metros por grado
+        metros_lat = delta_lat * 111_000
+        metros_lon = delta_lon * 111_000 * math.cos(math.radians(lat_prom))
+
+        distancia_metros = (metros_lat**2 + metros_lon**2) ** 0.5
+        distancia_score = 1 / (1 + distancia_metros)
+
+        if servicio == "Policia":
+            tiempo_respuesta =  distancia_metros / (15*60)  # Velocidad promedio de un vehículo de policia en m/s, pasado a minutos
+        else:
+            tiempo_respuesta =  distancia_metros / (11*60)  # Velocidad promedio de un vehículo de bomberos o ambulancia en m/s, pasado a minutos
+
+        tiempo_total+=tiempo_respuesta
+
+
+        pesos = {
+            "tipo": 0.2,
+            "discapacidad": 0.25,
+            "nivel": 0.4,
+            "distancia": 0.25
+        }
+
+        # --- Cálculo del coeficiente ponderado ---
+        coeficiente = (
+            tipo_score * pesos["tipo"] +
+            disc_score * pesos["discapacidad"] +
+            nivel_score * pesos["nivel"] +
+            distancia_score * pesos["distancia"]
+        )
+
+        
+        return round(coeficiente, 4), tiempo_respuesta, tiempo_total, distancia_metros
+    
+    @staticmethod
+    def asignar_vehiculo(vehiculos, emergencias):
         match_list_emergencias_id = []
         match_list_vehiculos_id = []
 
@@ -247,30 +313,64 @@ class Asignacion(beam.DoFn):
 
             match_list_emergencias_id.append(match_evento["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
+            yield (mejor_vehiculo, match_evento)
 
-            yield beam.pvalue.TaggedOutput("Match", (mejor_vehiculo, match_evento))
+            for emergencia in emergencias:
+                if emergencia["evento_id"] not in match_list_emergencias_id:
+                    yield emergencia
 
-        # Emitir emergencias sin emparejar
-        for emergencia in emergencias:
-            if emergencia["evento_id"] not in match_list_emergencias_id:
-                yield beam.pvalue.TaggedOutput("NoMatch", emergencia)
+    def process(self, mensaje):
+        """
+        Calculo de coeficientes y asignacion de vehiculos a emergencias
+        """
+        if mensaje is None:
+            return
+        clave, (emergencias_nuevas, vehiculos, no_matched) = mensaje
+        emergencias = emergencias_nuevas + (no_matched or [])
+        for i, emergencia in enumerate(emergencias):
+            coeficinetes_lista = []
+            for vehiculo in vehiculos:
+                coficiente = self.calculo_coeficiente(vehiculo, emergencia)[0]
+                coeficinetes_lista.append(coficiente)
+            emergencia["coeficientes"]=coeficinetes_lista
+        
+        asignaciones = list(self.asignar_vehiculo(vehiculos, emergencias))
+
+        for asignacion in asignaciones:
+            if isinstance(asignacion, tuple):
+                logging.info(f"Asignando vehiculo {asignacion[0]['recurso_id']} a emergencia {asignacion[1]['evento_id']}")
+                yield beam.pvalue.TaggedOutput("Match", asignacion)
+            elif isinstance(asignacion, dict):
+                asignacion["no_matched_count"] = len(vehiculos)
+                yield beam.pvalue.TaggedOutput("NoMatch", asignacion)
 
 
 class ActualizarSQL(beam.DoFn):
+
+    def __init__(self, project_id, table_sql):
+        self.mode = "europe-southwest1"
+        self.project_id = project_id
+        self.table_sql = table_sql
+
+    def setup(self):
+        connector = Connector()
+        conn = connector.connect(
+            f"{self.project_id}:{self.mode}:{self.table_sql}",
+            "pg8000",
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            db=DB_CONFIG['dbname'],
+        )
+        logging.info(f"Conectado a la base de datos {self.table_sql} en {self.project_id}")
+        return conn
+                    
     def process(self, match):
         vehiculo, emergencia = match
         try:
-            connector = Connector()
-
-            conn = connector.connect(
-                "splendid-strand-452918-e6:europe-southwest1:recursos",
-                "pg8000",
-                user=DB_CONFIG['user'],
-                password=DB_CONFIG['password'],
-                db=DB_CONFIG['dbname'],
-            )
+            conn= self.setup()
             cur = conn.cursor()
             cur.execute("UPDATE recursos SET asignado = TRUE, longitud= %s, latitud = %s WHERE recurso_id = %s;", (emergencia["lon"], emergencia["lat"], vehiculo["recurso_id"]))
+            logging.info(f"Vehiculo {vehiculo['recurso_id']} actualizado en la base de datos")
             conn.commit()
             cur.close()
             conn.close()
@@ -287,6 +387,23 @@ class LiberarRecurso(beam.DoFn):
     TEST_STATE = beam_state.BagStateSpec('test_events', coders.StrUtf8Coder())
     TIMER = beam_state.TimerSpec('timer', beam_state.TimeDomain.REAL_TIME)
 
+    def __init__(self, project_id, table_sql):
+        self.mode = "europe-southwest1"
+        self.project_id = project_id
+        self.table_sql = table_sql
+
+    def setup(self):
+        connector = Connector()
+        conn = connector.connect(
+            f"{self.project_id}:{self.mode}:{self.table_sql}",
+            "pg8000",
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            db=DB_CONFIG['dbname'],
+        )
+        logging.info(f"Conectado a la base de datos para liberar {self.table_sql} en {self.project_id}")
+        return conn
+
     def process(self,
                 element: typing.Tuple[int, datetime],
                 stored_test_state=beam.DoFn.StateParam(TEST_STATE),
@@ -295,7 +412,7 @@ class LiberarRecurso(beam.DoFn):
         stored_test_state.add(str(recurso_id))
         tiempo_float=tiempo.timestamp()
         timer.set(tiempo_float)
-        # logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
+        logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
 
     @beam_state.on_timer(TIMER)
     def expiry(self, buffer = beam.DoFn.StateParam(TEST_STATE), timer = beam.DoFn.TimerParam(TIMER)):
@@ -306,20 +423,13 @@ class LiberarRecurso(beam.DoFn):
         timer.clear()
 
 
-
+    @staticmethod
     def liberar_recurso(self, vehiculo_id: str):
         try:
-            connector = Connector()
-            conn = connector.connect(
-                "splendid-strand-452918-e6:europe-southwest1:recursos",
-                "pg8000",
-                user=DB_CONFIG['user'],
-                password=DB_CONFIG['password'],
-                db=DB_CONFIG['dbname'],
-            )
-            # logging.info(f"Recurso_id {vehiculo_id} liberado")
+            conn= self.setup()
             cur = conn.cursor()
             cur.execute("UPDATE recursos SET asignado = FALSE WHERE recurso_id = %s;", (vehiculo_id,))
+            logging.info(f"Vehiculo {vehiculo_id} liberado en la base de datos")
             conn.commit()
             cur.close()
             conn.close()
@@ -367,6 +477,11 @@ def run():
                 required=False,
                 help='PubSub Topic for sending no_match emergencies.')
     
+    parser.add_argument(
+            '--table_sql',
+            required=False,
+            help='SQL table where the vehicles are located.')
+    
 
     args, pipeline_opts = parser.parse_known_args()
 
@@ -382,149 +497,121 @@ def run():
             p
             | "ReadFromPubSubEvent1" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.emergency_events_subscription}')
             | "Decode + Timestamp Emergencias" >> beam.Map(decode_and_timestamp_event)
+            | "Fixed Window 1" >> beam.WindowInto(fixed_window)
         )
 
         no_match= (
             p
             | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.no_matched_topic}-sub')
             | "Decode no_match" >> beam.Map(decode_and_timestamp_event)
-            # | "logging no_match" >> beam.Map(lambda x: logging.info(f"No Match leido del subs: {x}"))
-            | "Timestamp no_match" >> beam.Map(actualizar_timestamp)
-
-
-        )
-
-        eventos_emergencias = (
-            (emergencia_nueva, no_match)
-            | "Flatten Emergencias" >> beam.Flatten()
-            # | "Filter Null Emergencias" >> beam.Filter(lambda x: x is not None)
-            # | "Combine 1" >> beam.Map(lambda x: (x['servicio'], x))
-            | "Fixed Window 1" >> beam.WindowInto(fixed_window)
-            )
-
-
-
-
-        eventos_vehiculo = (
-            p
-            | "ReadFromPubSubEvent2" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.vehicle_subscription}')
-            # | "Filter Null vehículos" >> beam.Filter(lambda x: x is not None)
-            | "Decode + Timestamp Vehículos" >> beam.Map(decode_and_timestamp_vehicle)
-            # | "Combine 2" >> beam.Map(lambda x: (x['servicio'], x))
+            # | "Timestamp no_match" >> beam.Map(actualizar_timestamp)
             | "Fixed Window 2" >> beam.WindowInto(fixed_window)
 
 
         )
 
-        # no_match | "print no_match" >> beam.Map(lambda x: logging.info(f"No Match leido del subs: {x}"))
+        eventos_vehiculo = (
+            p
+            | "ReadFromPubSubEvent2" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.vehicle_subscription}')
+            | "Decode + Timestamp Vehículos" >> beam.Map(decode_and_timestamp_vehicle)
+            | "Fixed Window 3" >> beam.WindowInto(fixed_window)
+        )
 
-        eventos_vehiculo | "Print Vehiculos" >> beam.Map(lambda x: logging.info(f"Vehiculo: {x}"))
-        eventos_emergencias | "Print Emergencias" >> beam.Map(lambda x: logging.info(f"Emergencia: {x}"))
-
-        grouped_data = ((eventos_emergencias, eventos_vehiculo)
+        grouped_data = ((no_match, eventos_vehiculo, emergencia_nueva)
                         | "Agrupacion PCollections" >> beam.CoGroupByKey()
                         )
-        # grouped_data | "Print Grouped Data" >> beam.Map(lambda x: logging.info(f"Grouped Data: {x}"))
 
         processed_data = (grouped_data
-            | "Calcular Coef y partir en 3 pcollections" >> beam.ParDo(CalcularCoeficiente()).with_outputs("Bomberos", "Policia", "Ambulancia"))
-
-        bomberos = processed_data.Bomberos
-        # bomberos | "Print Bomberos" >> beam.Map(lambda x: logging.info(f"Bomberos: {x}"))
-        policias = processed_data.Policia
-        # policias | "Print Policias" >> beam.Map(lambda x: logging.info(f"Policias: {x}"))
-        ambulancias = processed_data.Ambulancia
-        # ambulancias | "Print Ambulancias" >> beam.Map(lambda x: logging.info(f"Ambulancias: {x}"))
-
-
-        asignacion_bomb = (
-            bomberos
-            | "Asignación de Bomberos" >> beam.ParDo(Asignacion()).with_outputs("Match", "NoMatch")
-            )
-        asignacion_pol = (
-            policias
-            | "Asignación de Policias" >> beam.ParDo(Asignacion()).with_outputs("Match", "NoMatch")
-            )
-        asignacion_amb = (
-            ambulancias
-            | "Asignación de Ambulancias" >> beam.ParDo(Asignacion()).with_outputs("Match", "NoMatch")
-            )
+            | "Bussines Logic y partir en 2 pcollections" >> beam.ParDo(BussinesLogic()).with_outputs("Match", "NoMatch"))
 
         all_no_matches = (
-                (asignacion_bomb.NoMatch, asignacion_pol.NoMatch, asignacion_amb.NoMatch)
-                | "Flatten No Matches" >> beam.Flatten()
+                (processed_data.NoMatch)
                 | "Times no_matched" >> beam.Map(incrementar_no_matched)
-                | "Encode No Matches" >> beam.Map(encode_message)
             )
-
-        all_no_matches | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.no_matched_topic}")
-        all_no_matches | "Print No Matches" >> beam.Map(lambda x: logging.info(f"No Match enviado al topic: {x}"))
+        write_no_match = (
+            (all_no_matches) 
+            | "Encode No Matches" >> beam.Map(encode_message)
+            | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.no_matched_topic}")
+        )
 
         all_matches = (
-                (asignacion_bomb.Match, asignacion_pol.Match, asignacion_amb.Match)
-                | "Flatten Matches" >> beam.Flatten()
+                (processed_data.Match)
+                | "Actualizar SQL" >> beam.ParDo(ActualizarSQL(project_id=args.project_id, table_sql=args.table_sql))
             )
-        all_matches | "print matches" >> beam.Map(lambda x: logging.info(f"Match: {x}"))
-        all_matches | "Asignar recurso" >> beam.ParDo(ActualizarSQL())
+        
+        liberar_recursos = (
+            (processed_data.Match) 
+            | "Claves para liberar" >> beam.Map(lambda x: (x[0]["recurso_id"], x[1]["disponible_en"]))
+            | "Liberar tras tiempo" >> beam.ParDo(LiberarRecurso(project_id=args.project_id, table_sql=args.table_sql))
+        )
+
+        formatear_match= processed_data.Match | "Formatear a BQ Matches" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
+        Big_Query_match = (
+            (formatear_match) 
+            | "Write to BigQuery" >> beam.io.WriteToBigQuery(
+                table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_matched}",
+                schema= (
+                        "recurso_id:STRING,"
+                        "servicio_recurso:STRING,"
+                        "lat_recurso:FLOAT,"
+                        "lon_recurso:FLOAT,"
+                        "timestamp_ubicacion:TIMESTAMP,"
+                        "evento_id:STRING,"
+                        "timestamp_evento:TIMESTAMP,"
+                        "servicio_evento:STRING,"
+                        "tipo:STRING,"
+                        "discapacidad:STRING,"
+                        "nivel_emergencia:STRING,"
+                        "lat_evento:FLOAT,"
+                        "edad:FLOAT,"
+                        "lon_evento:FLOAT,"
+                        "coeficiente_seleccionado:FLOAT,"
+                        "tiempo_total:FLOAT,"
+                        "tiempo_respuesta:FLOAT,"
+                        "distancia_recorrida:FLOAT,"
+                        "disponible_en:TIMESTAMP"
+                ),
 
 
-        # formatear_match = all_matches | "Formatear a BQ" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
-        # formatear_match | "Write to BigQuery" >> beam.io.WriteToBigQuery(
-        #         table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_matched}",
-        #         schema= (
-        #                 "recurso_id:STRING,"
-        #                 "servicio_recurso:STRING,"
-        #                 "lat_recurso:FLOAT,"
-        #                 "lon_recurso:FLOAT,"
-        #                 "timestamp_ubicacion:TIMESTAMP,"
-        #                 "evento_id:STRING,"
-        #                 "timestamp_evento:TIMESTAMP,"
-        #                 "servicio_evento:STRING,"
-        #                 "tipo:STRING,"
-        #                 "descapacidad:STRING,"
-        #                 "nivel_emergencia:STRING,"
-        #                 "lat_evento:FLOAT,"
-        #                 "edad:FLOAT,"
-        #                 "lon_evento:FLOAT,"
-        #                 "coeficiente_seleccionado:FLOAT,"
-        #                 "tiempo_total:FLOAT,"
-        #                 "tiempo_respuesta:FLOAT,"
-        #                 "distancia_recorrida:FLOAT,"
-        #                 "disponible_en:TIMESTAMP"
-        #         ),
+                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+            )
+        )
+
+        formater_no_match= (
+            (all_no_matches)
+            # | "Decode" >> beam.Map(decode_message)
+            | "Formatear a BQ No match" >> beam.Map(lambda x: formatear_para_bigquery_no_matched(x))
+        )
+
+        Big_Query_no_match =( 
+            (formater_no_match) 
+            | "Write to BigQuery no match" >> beam.io.WriteToBigQuery(
+                table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_no_matched}",
+                schema= (
+                        "evento_id:STRING,"
+                        "timestamp_evento:TIMESTAMP,"
+                        "servicio_evento:STRING,"
+                        "tipo:STRING,"
+                        "edad:INTEGER,"
+                        "discapacidad:STRING,"
+                        "nivel_emergencia:STRING,"
+                        "lat_evento:FLOAT,"
+                        "lon_evento:FLOAT,"
+                        "coeficientes:FLOAT REPEATED,"
+                        "no_matched_count:INTEGER"
+                ),
 
 
-        #         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
-        #     )
-
-        # formatear_no_match = all_no_matches | "Decode" >> beam.Map(decode_message)
-        # formatear_no_match | "Formatear a BQ No match" >> beam.Map(lambda x: formatear_para_bigquery_no_matched(x))
-        # formatear_no_match | "Write to BigQuery no match" >> beam.io.WriteToBigQuery(
-        #         table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_no_matched}",
-        #         schema= (
-        #                 "evento_id:STRING,"
-        #                 "timestamp_evento:TIMESTAMP,"
-        #                 "servicio_evento:STRING,"
-        #                 "tipo:STRING,"
-        #                 "edad:INTEGER,"
-        #                 "discapacidad:STRING,"
-        #                 "nivel_emergencia:STRING,"
-        #                 "lat_evento:FLOAT,"
-        #                 "lon_evento:FLOAT,"
-        #                 "coeficientes:FLOAT REPEATED,"
-        #                 "no_matched_count:INTEGER"
-        #         ),
-
-
-        #         create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
-        #     )
-
-
-        matches_clave = all_matches | "Con clave" >> beam.Map(lambda x: (x[0]["recurso_id"], x[1]["disponible_en"]))
-        matches_clave | "Liberar tras tiempo" >> beam.ParDo(LiberarRecurso())
+                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+            )
+        )
 
 
 
-run()
+if __name__ == '__main__':
+
+    logging.info("The process started")
+
+    run()
