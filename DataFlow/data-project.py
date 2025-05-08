@@ -9,6 +9,12 @@ from google.cloud.sql.connector import Connector
 import time
 from zoneinfo import ZoneInfo
 import argparse
+from apache_beam.coders import StrUtf8Coder
+from apache_beam.transforms.timeutil import TimeDomain
+import typing
+import apache_beam.transforms.userstate as beam_state
+from apache_beam import coders
+import pytz
 
 
 """FALTEN ELS REQUIREMENTS Y CAMBIAR ELS TOPICS DE PUBSUB
@@ -367,30 +373,27 @@ class ActualizarSQL(beam.DoFn):
             logging.error(f"Error al actualizar la ubicación para recurso_id {vehiculo["recurso_id"]}: {e}")
 
 class LiberarRecurso(beam.DoFn):
-    from apache_beam.coders import StrUtf8Coder
-    from apache_beam.transforms.timeutil import TimeDomain
-    import typing
-    import apache_beam.transforms.userstate as beam_state
-    from apache_beam import coders
 
     TEST_STATE = beam_state.BagStateSpec('test_events', coders.StrUtf8Coder())
     TIMER = beam_state.TimerSpec('timer', beam_state.TimeDomain.REAL_TIME)
 
     def __init__(self, project_id, table_sql):
-        self.mode = "europe-southwest1"
+        self.zone = "europe-southwest1"
         self.project_id = project_id
         self.table_sql = table_sql
 
     def setup(self):
         connector = Connector()
-        self.conn = connector.connect(
-            f"{self.project_id}:{self.mode}:{self.table_sql}",
+        conn = connector.connect(
+            f"{self.project_id}:{self.zone}:{self.table_sql}",
             "pg8000",
             user=DB_CONFIG['user'],
             password=DB_CONFIG['password'],
             db=DB_CONFIG['dbname'],
         )
         logging.info(f"Conectado a la base de datos para liberar {self.table_sql} en {self.project_id}")
+        return conn
+        
         
 
     def process(self,
@@ -399,7 +402,7 @@ class LiberarRecurso(beam.DoFn):
                 timer = beam.DoFn.TimerParam(TIMER)):
         recurso_id, tiempo = element
         stored_test_state.add(str(recurso_id))
-        tiempo_float=tiempo.timestamp()
+        tiempo_float=tiempo.astimezone(pytz.UTC).timestamp()
         timer.set(tiempo_float)
         logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
 
@@ -414,12 +417,13 @@ class LiberarRecurso(beam.DoFn):
 
     def liberar_recurso(self, vehiculo_id: str):
         try:
-            cur = self.conn.cursor()
+            conn= self.setup()
+            cur = conn.cursor()
             cur.execute("UPDATE recursos SET asignado = FALSE WHERE recurso_id = %s;", (vehiculo_id,))
             logging.info(f"Vehiculo {vehiculo_id} liberado en la base de datos")
-            self.conn.commit()
+            conn.commit()
             cur.close()
-            self.conn.close()
+            conn.close()
         except Exception as e:
             logging.error(f"Error al liberar el recurso_id {vehiculo_id}: {e}")
 
