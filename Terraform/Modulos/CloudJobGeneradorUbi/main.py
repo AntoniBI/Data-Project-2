@@ -139,7 +139,7 @@ def enviar_a_api(mensaje_dict):
     except requests.exceptions.RequestException as e:
         print(f"❌ Error al enviar a la API: {e}")
 
-def simular_movimiento(intervalo=1):
+def simular_movimiento(intervalo=15):
     """Simular el movimiento de los recursos asignados y enviar sus nuevas ubicaciones"""
     while True:
         recursos = obtener_recursos_asignados()

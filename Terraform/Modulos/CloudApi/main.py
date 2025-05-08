@@ -202,7 +202,7 @@ def get_recursos_asignados():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT recurso_id, servicio, latitud, longitud FROM recursos WHERE asignado = TRUE;")
+        cursor.execute("SELECT recurso_id, servicio, latitud, longitud FROM recursos WHERE asignado = FALSE;")
         recursos = cursor.fetchall()
         cursor.close()
         conn.close()
@@ -223,61 +223,61 @@ def get_recursos_asignados():
         return jsonify({"error": "Could not retrieve assigned resources"}), 500
     
 
-@app.route('/api/estado-evento', methods=['GET'])
-def estado_evento():
-    evento_id = request.args.get('evento_id')
-    if not evento_id:
-        return jsonify({"error": "Parámetro 'evento_id' es obligatorio"}), 400
+# @app.route('/api/estado-evento', methods=['GET'])
+# def estado_evento():
+#     evento_id = request.args.get('evento_id')
+#     if not evento_id:
+#         return jsonify({"error": "Parámetro 'evento_id' es obligatorio"}), 400
 
-    client = bigquery.Client(project=PROJECT_ID)
+#     client = bigquery.Client(project=PROJECT_ID)
 
-    dataset = "emergencia_eventos"
-    tabla_macheadas = f"`{PROJECT_ID}.{dataset}.emergencias-macheadas`"
-    tabla_no_macheadas = f"`{PROJECT_ID}.{dataset}.emergencias-no-macheadas`"
+#     dataset = "emergencia_eventos"
+#     tabla_macheadas = f"`{PROJECT_ID}.{dataset}.emergencias-macheadas`"
+#     tabla_no_macheadas = f"`{PROJECT_ID}.{dataset}.emergencias-no-macheadas`"
 
-    try:
-        query_macheado = f"""
-        SELECT evento_id FROM {tabla_macheadas}
-        WHERE evento_id = @evento_id
-        LIMIT 1
-        """
-        job_macheado = client.query(
-            query_macheado,
-            job_config=bigquery.QueryJobConfig(
-                query_parameters=[
-                    bigquery.ScalarQueryParameter("evento_id", "STRING", evento_id)
-                ]
-            )
-        )
-        macheado_result = list(job_macheado.result())
+#     try:
+#         query_macheado = f"""
+#         SELECT evento_id FROM {tabla_macheadas}
+#         WHERE evento_id = @evento_id
+#         LIMIT 1
+#         """
+#         job_macheado = client.query(
+#             query_macheado,
+#             job_config=bigquery.QueryJobConfig(
+#                 query_parameters=[
+#                     bigquery.ScalarQueryParameter("evento_id", "STRING", evento_id)
+#                 ]
+#             )
+#         )
+#         macheado_result = list(job_macheado.result())
 
-        if macheado_result:
-            return jsonify({"evento_id": evento_id, "estado": "macheado"}), 200
+#         if macheado_result:
+#             return jsonify({"evento_id": evento_id, "estado": "macheado"}), 200
 
         
-        query_no_macheado = f"""
-        SELECT evento_id FROM {tabla_no_macheadas}
-        WHERE evento_id = @evento_id
-        LIMIT 1
-        """
-        job_no_macheado = client.query(
-            query_no_macheado,
-            job_config=bigquery.QueryJobConfig(
-                query_parameters=[
-                    bigquery.ScalarQueryParameter("evento_id", "STRING", evento_id)
-                ]
-            )
-        )
-        no_macheado_result = list(job_no_macheado.result())
+#         query_no_macheado = f"""
+#         SELECT evento_id FROM {tabla_no_macheadas}
+#         WHERE evento_id = @evento_id
+#         LIMIT 1
+#         """
+#         job_no_macheado = client.query(
+#             query_no_macheado,
+#             job_config=bigquery.QueryJobConfig(
+#                 query_parameters=[
+#                     bigquery.ScalarQueryParameter("evento_id", "STRING", evento_id)
+#                 ]
+#             )
+#         )
+#         no_macheado_result = list(job_no_macheado.result())
 
-        if no_macheado_result:
-            return jsonify({"evento_id": evento_id, "estado": "no macheado"}), 200
+#         if no_macheado_result:
+#             return jsonify({"evento_id": evento_id, "estado": "no macheado"}), 200
 
-        return jsonify({"evento_id": evento_id, "estado": "no encontrado"}), 404
+#         return jsonify({"evento_id": evento_id, "estado": "no encontrado"}), 404
 
-    except Exception as e:
-        print(f"Error al consultar estado del evento: {e}")
-        return jsonify({"error": "Error al consultar BigQuery"}), 500
+#     except Exception as e:
+#         print(f"Error al consultar estado del evento: {e}")
+#         return jsonify({"error": "Error al consultar BigQuery"}), 500
 
 
 if __name__ == '__main__':
