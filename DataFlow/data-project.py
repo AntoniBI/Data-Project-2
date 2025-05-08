@@ -9,6 +9,12 @@ from google.cloud.sql.connector import Connector
 import time
 from zoneinfo import ZoneInfo
 import argparse
+from apache_beam.coders import StrUtf8Coder
+from apache_beam.transforms.timeutil import TimeDomain
+import typing
+import apache_beam.transforms.userstate as beam_state
+from apache_beam import coders
+import pytz
 
 
 """FALTEN ELS REQUIREMENTS Y CAMBIAR ELS TOPICS DE PUBSUB
@@ -219,10 +225,10 @@ class BussinesLogic(beam.DoFn):
             tiempo_total= 30
         elif nivel_emergencia == "Nivel 2: Emergencia moderada":
             nivel_score= 0.5
-            tiempo_total= 1
+            tiempo_total= 60
         elif nivel_emergencia == "Nivel 3: Emergencia grave":
             nivel_score= 0.8
-            tiempo_total= 1
+            tiempo_total= 120
 
         delta_lat = latitud_emergencia - latitud_vehiculo
         delta_lon = longitud_emergencia - longitud_vehiculo
@@ -298,7 +304,7 @@ class BussinesLogic(beam.DoFn):
             match_evento["tiempo_total"] = tiempo_dist[2]
             match_evento["tiempo_respuesta"] = tiempo_dist[1]
             match_evento["distancia_recorrida"] = tiempo_dist[3]
-            match_evento["disponible_en"] = datetime.now(ZoneInfo("Europe/Madrid")) + timedelta(minutes=match_evento["tiempo_total"])
+            match_evento["disponible_en"] = datetime.now() + timedelta(minutes=match_evento["tiempo_total"])
 
             match_list_emergencias_id.append(match_evento["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
@@ -367,24 +373,19 @@ class ActualizarSQL(beam.DoFn):
             logging.error(f"Error al actualizar la ubicación para recurso_id {vehiculo["recurso_id"]}: {e}")
 
 class LiberarRecurso(beam.DoFn):
-    from apache_beam.coders import StrUtf8Coder
-    from apache_beam.transforms.timeutil import TimeDomain
-    import typing
-    import apache_beam.transforms.userstate as beam_state
-    from apache_beam import coders
 
     TEST_STATE = beam_state.BagStateSpec('test_events', coders.StrUtf8Coder())
-    TIMER = beam_state.TimerSpec('timer', beam_state.TimeDomain.REAL_TIME)
+    TIMER = beam_state.TimerSpec('timer', TimeDomain.REAL_TIME)
 
     def __init__(self, project_id, table_sql):
-        self.mode = "europe-southwest1"
+        self.zone = "europe-southwest1"
         self.project_id = project_id
         self.table_sql = table_sql
 
     def setup(self):
         connector = Connector()
         conn = connector.connect(
-            f"{self.project_id}:{self.mode}:{self.table_sql}",
+            f"{self.project_id}:{self.zone}:{self.table_sql}",
             "pg8000",
             user=DB_CONFIG['user'],
             password=DB_CONFIG['password'],
@@ -392,15 +393,19 @@ class LiberarRecurso(beam.DoFn):
         )
         logging.info(f"Conectado a la base de datos para liberar {self.table_sql} en {self.project_id}")
         return conn
+        
+        
 
     def process(self,
                 element: typing.Tuple[int, datetime],
                 stored_test_state=beam.DoFn.StateParam(TEST_STATE),
                 timer = beam.DoFn.TimerParam(TIMER)):
         recurso_id, tiempo = element
+
         stored_test_state.add(str(recurso_id))
-        tiempo_float=tiempo.timestamp()
+        tiempo_float=tiempo.astimezone(pytz.UTC).timestamp()
         timer.set(tiempo_float)
+        
         logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
 
     @beam_state.on_timer(TIMER)
@@ -412,7 +417,6 @@ class LiberarRecurso(beam.DoFn):
         timer.clear()
 
 
-    @staticmethod
     def liberar_recurso(self, vehiculo_id: str):
         try:
             conn= self.setup()
@@ -471,6 +475,11 @@ def run():
             required=False,
             help='SQL table where the vehicles are located.')
     
+    parser.add_argument(
+        '--streamlit_topic',
+        required=False,
+        help='topic to streamlit')
+    
 
     args, pipeline_opts = parser.parse_known_args()
 
@@ -522,6 +531,12 @@ def run():
             | "Send message to Topic" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.no_matched_topic}")
         )
 
+        write_to_firebase = (
+            (processed_data.Match) 
+            | "Encode Matches" >> beam.Map(encode_message)
+            | "Send message to Topic streamlit" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.streamlit_topic}")
+        )
+
         all_matches = (
                 (processed_data.Match)
                 | "Update SQL" >> beam.ParDo(ActualizarSQL(project_id=args.project_id, table_sql=args.table_sql))
@@ -536,6 +551,7 @@ def run():
         formatear_match= processed_data.Match | "Format BQ Matches" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
         Big_Query_match = (
             (formatear_match) 
+
             | "Write to BigQuery" >> beam.io.WriteToBigQuery(
                 table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_matched}",
                 schema= (
