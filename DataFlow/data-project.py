@@ -271,13 +271,12 @@ class BussinesLogic(beam.DoFn):
     def asignar_vehiculo(vehiculos, emergencias):
         match_list_emergencias_id = []
         match_list_vehiculos_id = []
+        asignaciones = []
 
         while True:
             max_total = -1
             match_evento = None
             mejor_vehiculo = None
-            i_emergencia = -1
-            i_vehiculo = -1
 
             for idx_e, emergencia in enumerate(emergencias):
                 if emergencia["evento_id"] in match_list_emergencias_id:
@@ -292,8 +291,6 @@ class BussinesLogic(beam.DoFn):
                         max_total = coef
                         match_evento = emergencia
                         mejor_vehiculo = vehiculo
-                        i_emergencia = idx_e
-                        i_vehiculo = idx_v
 
             if match_evento is None or mejor_vehiculo is None:
                 break
@@ -308,11 +305,15 @@ class BussinesLogic(beam.DoFn):
 
             match_list_emergencias_id.append(match_evento["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
-            yield (mejor_vehiculo, match_evento)
+            asignaciones.append((mejor_vehiculo, match_evento))
 
-            for emergencia in emergencias:
-                if emergencia["evento_id"] not in match_list_emergencias_id:
-                    yield emergencia
+        for asignacion in asignaciones:
+            yield asignacion
+
+        for emergencia in emergencias:
+            if emergencia["evento_id"] not in match_list_emergencias_id:
+                yield emergencia
+
 
     def process(self, mensaje):
         """

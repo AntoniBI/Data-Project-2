@@ -10,7 +10,7 @@ resource "google_project_iam_member" "artifact_registry_sa_member" {
   member  = "serviceAccount:${google_service_account.artifact_registry_sa.email}"
 }
 
-
+a
 resource "google_artifact_registry_repository" "central_repo" {
   project       = var.project_id
   location      = var.region
