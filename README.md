@@ -77,4 +77,4 @@ Este sistema está diseñado para mejorar la eficiencia y rapidez en la gestión
 
 ## VIDEO DEMO
 
-https://youtu.be/Qex5dTF3h14
+https://youtu.be/ypjjv5sIaaI
