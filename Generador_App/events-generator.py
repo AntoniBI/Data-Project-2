@@ -7,6 +7,7 @@ import uuid
 from zoneinfo import ZoneInfo
 
 
+API_URL = "https://str-service-puifiielba-no.a.run.app"
 servicios = ["Policia", "Bombero", "Ambulancia"]
  
 tipos = ["Individual", "Colectiva"]
@@ -51,7 +52,7 @@ def enviar_solicitudes(delay=5):
         try:
 
             res = requests.post(
-                url="http://localhost:8080/api/request-help",
+                url=f"{API_URL}/api/request-help",
                 data=json.dumps(payload),
                 headers={"Content-Type": "application/json"},
             )
