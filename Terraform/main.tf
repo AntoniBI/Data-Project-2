@@ -106,3 +106,22 @@ module "cloud_function_pubsub" {
   project_id = "splendid-strand-452918-e6"
   region     = "europe-west1"
 }
+
+resource "google_storage_bucket" "dataflow_staging" {
+  name     = "dataflow-staging-europe-southwest1-385129730744"
+  location = "europe-southwest1"
+  project  = "splendid-strand-452918-e6"
+
+  uniform_bucket_level_access = true
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      age = 7
+    }
+  }
+
+  force_destroy = true
+}

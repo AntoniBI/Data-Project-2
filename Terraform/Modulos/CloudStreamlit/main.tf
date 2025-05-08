@@ -59,7 +59,7 @@ resource "google_service_account" "streamlit_invoker" {
 resource "null_resource" "docker_build" {
   provisioner "local-exec" {
     command = <<EOL
-      docker build --platform=linux/amd64 -t streamlit .
+      docker build --platform=linux/amd64 -t streamlit ${path.module}
       docker tag streamlit europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-streamlit:latest
       docker push europe-southwest1-docker.pkg.dev/splendid-strand-452918-e6/data-project-2/str-streamlit:latest
     EOL
