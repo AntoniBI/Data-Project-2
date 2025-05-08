@@ -1,6 +1,6 @@
 provider "google" {
-  project = "splendid-strand-452918-e6"  
-  region  = "europe-west1"     
+  project = var.project_id 
+  region  = var.region   
 }
 
 resource "google_pubsub_topic" "example_topic" {
@@ -10,7 +10,7 @@ resource "google_pubsub_topic" "example_topic" {
 
 resource "google_storage_bucket" "example_bucket" {
   name          = "streamlit-source-bucket1314234"   
-  location      = "europe-west1"                                  
+  location      = var.region                                 
   force_destroy = true                                  
 }
 
