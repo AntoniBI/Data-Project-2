@@ -76,5 +76,4 @@ El sistema de asignación funciona con base en los siguientes pasos:
 Este sistema está diseñado para mejorar la eficiencia y rapidez en la gestión de emergencias durante eventos catastróficos como la DANA, ayudando a priorizar vidas y recursos cuando más se necesitan.
 
 ## VIDEO DEMO
-
-https://youtu.be/ypjjv5sIaaI
+https://youtu.be/RijW_lruL7w
