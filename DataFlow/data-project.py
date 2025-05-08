@@ -30,33 +30,22 @@ DB_CONFIG = {
 }
 
 def incrementar_no_matched(evento):
-    # evento = json.loads(evento.decode("utf-8")) if isinstance(evento, bytes) else evento
     evento['no_matched_count'] = evento.get('no_matched_count', 0) + 1
-    # Actualiza el timestamp con el tiempo real actual para forzar avance
-    # evento['timestamp_evento'] = datetime.now(("Europe/Madrid")).strftime("%Y-%m-%d %H:%M:%S")
+
     return evento
 
-def actualizar_timestamp(evento):
-    from apache_beam import window
-    key, value = evento
-    value['timestamp_evento'] = datetime.now(ZoneInfo("Europe/Madrid")).strftime("%Y-%m-%d %H:%M:%S")
-    return window.TimestampedValue((key, value), time.time())
 
 def decode_and_timestamp_event(msg):
     data = decode_message(msg)
-    if 'timestamp_evento' in data:
-        ts = datetime.strptime(data['timestamp_evento'], "%Y-%m-%d %H:%M:%S")
-        return beam.window.TimestampedValue((data['servicio'], data), ts.timestamp())
-    else:
-        return None
+    logging.info(f"Mensaje decodificado emergencia: {data}")
+    return (data['servicio'], data)
+
 
 def decode_and_timestamp_vehicle(msg):
     data = decode_message(msg)
-    if 'timestamp_ubicacion' in data:
-        ts = datetime.strptime(data['timestamp_ubicacion'], "%Y-%m-%d %H:%M:%S")
-        return beam.window.TimestampedValue((data['servicio'], data), ts.timestamp())
-    else:
-        return None
+    logging.info(f"Mensaje decodificado vehiculo: {data}")
+    return (data['servicio'], data)
+    
 
 def decode_message(msg):
 
@@ -504,7 +493,6 @@ def run():
             p
             | "ReadFromPubSubEvent3" >> beam.io.ReadFromPubSub(subscription=f'projects/{args.project_id}/subscriptions/{args.no_matched_topic}-sub')
             | "Decode no_match" >> beam.Map(decode_and_timestamp_event)
-            # | "Timestamp no_match" >> beam.Map(actualizar_timestamp)
             | "Fixed Window 2" >> beam.WindowInto(fixed_window)
 
 
