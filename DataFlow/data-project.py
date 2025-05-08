@@ -225,10 +225,10 @@ class BussinesLogic(beam.DoFn):
             tiempo_total= 30
         elif nivel_emergencia == "Nivel 2: Emergencia moderada":
             nivel_score= 0.5
-            tiempo_total= 1
+            tiempo_total= 60
         elif nivel_emergencia == "Nivel 3: Emergencia grave":
             nivel_score= 0.8
-            tiempo_total= 1
+            tiempo_total= 120
 
         delta_lat = latitud_emergencia - latitud_vehiculo
         delta_lon = longitud_emergencia - longitud_vehiculo
@@ -304,7 +304,7 @@ class BussinesLogic(beam.DoFn):
             match_evento["tiempo_total"] = tiempo_dist[2]
             match_evento["tiempo_respuesta"] = tiempo_dist[1]
             match_evento["distancia_recorrida"] = tiempo_dist[3]
-            match_evento["disponible_en"] = datetime.now(ZoneInfo("Europe/Madrid")) + timedelta(minutes=match_evento["tiempo_total"])
+            match_evento["disponible_en"] = datetime.now() + timedelta(minutes=match_evento["tiempo_total"])
 
             match_list_emergencias_id.append(match_evento["evento_id"])
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
@@ -375,7 +375,7 @@ class ActualizarSQL(beam.DoFn):
 class LiberarRecurso(beam.DoFn):
 
     TEST_STATE = beam_state.BagStateSpec('test_events', coders.StrUtf8Coder())
-    TIMER = beam_state.TimerSpec('timer', beam_state.TimeDomain.REAL_TIME)
+    TIMER = beam_state.TimerSpec('timer', TimeDomain.REAL_TIME)
 
     def __init__(self, project_id, table_sql):
         self.zone = "europe-southwest1"
@@ -401,9 +401,11 @@ class LiberarRecurso(beam.DoFn):
                 stored_test_state=beam.DoFn.StateParam(TEST_STATE),
                 timer = beam.DoFn.TimerParam(TIMER)):
         recurso_id, tiempo = element
+
         stored_test_state.add(str(recurso_id))
         tiempo_float=tiempo.astimezone(pytz.UTC).timestamp()
         timer.set(tiempo_float)
+        
         logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
 
     @beam_state.on_timer(TIMER)
@@ -549,6 +551,7 @@ def run():
         formatear_match= processed_data.Match | "Format BQ Matches" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
         Big_Query_match = (
             (formatear_match) 
+
             | "Write to BigQuery" >> beam.io.WriteToBigQuery(
                 table=f"{args.project_id}:{args.big_query_dataset}.{args.big_query_table_matched}",
                 schema= (
