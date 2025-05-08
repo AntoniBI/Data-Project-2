@@ -518,11 +518,11 @@ def run():
         )
 
         grouped_data = ((no_match, eventos_vehiculo, emergencia_nueva)
-                        | "Agrupacion PCollections" >> beam.CoGroupByKey()
+                        | "Group PCollections" >> beam.CoGroupByKey()
                         )
 
         processed_data = (grouped_data
-            | "Bussines Logic y partir en 2 pcollections" >> beam.ParDo(BussinesLogic()).with_outputs("Match", "NoMatch"))
+            | "Bussines Logic" >> beam.ParDo(BussinesLogic()).with_outputs("Match", "NoMatch"))
 
         all_no_matches = (
                 (processed_data.NoMatch)
@@ -531,21 +531,21 @@ def run():
         write_no_match = (
             (all_no_matches) 
             | "Encode No Matches" >> beam.Map(encode_message)
-            | "Enviar a Topic de Reintento" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.no_matched_topic}")
+            | "Send message to Topic" >> beam.io.WriteToPubSub(topic=f"projects/{args.project_id}/topics/{args.no_matched_topic}")
         )
 
         all_matches = (
                 (processed_data.Match)
-                | "Actualizar SQL" >> beam.ParDo(ActualizarSQL(project_id=args.project_id, table_sql=args.table_sql))
+                | "Update SQL" >> beam.ParDo(ActualizarSQL(project_id=args.project_id, table_sql=args.table_sql))
             )
         
         liberar_recursos = (
             (processed_data.Match) 
-            | "Claves para liberar" >> beam.Map(lambda x: (x[0]["recurso_id"], x[1]["disponible_en"]))
-            | "Liberar tras tiempo" >> beam.ParDo(LiberarRecurso(project_id=args.project_id, table_sql=args.table_sql))
+            | "Format update SQL" >> beam.Map(lambda x: (x[0]["recurso_id"], x[1]["disponible_en"]))
+            | "Update SQL asignado=false" >> beam.ParDo(LiberarRecurso(project_id=args.project_id, table_sql=args.table_sql))
         )
 
-        formatear_match= processed_data.Match | "Formatear a BQ Matches" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
+        formatear_match= processed_data.Match | "Format BQ Matches" >> beam.Map(lambda x: formatear_para_bigquery_matched(*x))
         Big_Query_match = (
             (formatear_match) 
             | "Write to BigQuery" >> beam.io.WriteToBigQuery(
@@ -581,7 +581,7 @@ def run():
         formater_no_match= (
             (all_no_matches)
             # | "Decode" >> beam.Map(decode_message)
-            | "Formatear a BQ No match" >> beam.Map(lambda x: formatear_para_bigquery_no_matched(x))
+            | "Format BQ No match" >> beam.Map(lambda x: formatear_para_bigquery_no_matched(x))
         )
 
         Big_Query_no_match =( 
