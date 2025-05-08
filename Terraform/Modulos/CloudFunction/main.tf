@@ -9,7 +9,7 @@ resource "google_pubsub_topic" "example_topic" {
 
 
 resource "google_storage_bucket" "example_bucket" {
-  name          = "streamlit-source-bucket1314234"   
+  name          = "streamlit-source-bucket5466571"   
   location      = var.region                                 
   force_destroy = true                                  
 }

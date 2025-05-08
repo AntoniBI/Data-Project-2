@@ -284,14 +284,14 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 80,
+            "fillOpacity": 100,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 1,
+            "lineWidth": 4,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -326,9 +326,10 @@
       "id": 10,
       "options": {
         "barRadius": 0,
-        "barWidth": 0.97,
+        "barWidth": 0.88,
+        "colorByField": "tiempo_promedio",
         "fullHighlight": false,
-        "groupWidth": 0.7,
+        "groupWidth": 0.6,
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -344,7 +345,7 @@
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
-          "sort": "none"
+          "sort": "desc"
         },
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
@@ -415,7 +416,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 13,
+        "h": 20,
         "w": 13,
         "x": 0,
         "y": 15
@@ -743,6 +744,114 @@
       ],
       "title": "Evolución temporal del número de emergencias",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-bigquery-datasource",
+        "uid": "P0871A590F805E5CD"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 11,
+        "x": 13,
+        "y": 28
+      },
+      "id": 14,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": 1,
+          "location": "",
+          "project": "splendid-strand-452918-e6",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  servicio_recurso,\n  ROUND(AVG(tiempo_total), 2) AS tiempo_medio\nFROM\n  `splendid-strand-452918-e6.emergencia_eventos.emergencias-macheadas`\nGROUP BY\n  servicio_recurso\nORDER BY\n  tiempo_medio DESC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Tiempo Total",
+      "type": "barchart"
     }
   ],
   "preload": false,
