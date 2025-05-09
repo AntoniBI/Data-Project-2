@@ -102,10 +102,10 @@ def calculo_coeficiente(vehiculo, emergencia):
         tiempo_total= 30
     elif nivel_emergencia == "Nivel 2: Emergencia moderada":
         nivel_score= 0.5
-        tiempo_total= 1
+        tiempo_total= 60
     elif nivel_emergencia == "Nivel 3: Emergencia grave":
         nivel_score= 0.8
-        tiempo_total= 1
+        tiempo_total= 120
 
     delta_lat = latitud_emergencia - latitud_vehiculo
     delta_lon = longitud_emergencia - longitud_vehiculo
@@ -188,84 +188,6 @@ def formatear_para_bigquery_no_matched(mensaje):
 
 
 class BussinesLogic(beam.DoFn):
-    @staticmethod
-    def calculo_coeficiente(vehiculo, emergencia):
-        servicio = emergencia["servicio"]
-        tipo_emergencia = emergencia["tipo"]
-        edad=emergencia.get("edad", 0)
-        discapacidad=emergencia["discapacidad"]
-        nivel_emergencia=emergencia["nivel_emergencia"]
-        latitud_emergencia=emergencia["lat"]
-        longitud_emergencia=emergencia["lon"]
-        latitud_vehiculo=vehiculo["latitud"]
-        longitud_vehiculo=vehiculo["longitud"]
-
-        if tipo_emergencia == "Individual":
-            tipo_score = 0
-            if edad < 10:
-                tipo_score = 0.5
-            elif edad > 70:
-                tipo_score = 0.5
-        elif tipo_emergencia == "Colectiva":
-            tipo_score = 1.0
-
-        if discapacidad == "Grado 1: Discapacidad nula":
-            disc_score= 0.0
-        elif discapacidad == "Grado 2: Discapacidad leve":
-            disc_score= 0.2
-        elif discapacidad == "Grado 3: Discapacidad moderada":
-            disc_score= 0.4
-        elif discapacidad == "Grado 4: Discapacidad grave":
-            disc_score= 0.6
-        elif discapacidad == "Grado 5: Discapacidad muy grave":
-            disc_score= 0.8
-
-        if nivel_emergencia == "Nivel 1: Emergencia leve":
-            nivel_score= 0.2
-            tiempo_total= 30
-        elif nivel_emergencia == "Nivel 2: Emergencia moderada":
-            nivel_score= 0.5
-            tiempo_total= 60
-        elif nivel_emergencia == "Nivel 3: Emergencia grave":
-            nivel_score= 0.8
-            tiempo_total= 120
-
-        delta_lat = latitud_emergencia - latitud_vehiculo
-        delta_lon = longitud_emergencia - longitud_vehiculo
-        lat_prom = (latitud_vehiculo + latitud_emergencia) / 2
-
-        # Aprox. metros por grado
-        metros_lat = delta_lat * 111_000
-        metros_lon = delta_lon * 111_000 * math.cos(math.radians(lat_prom))
-
-        distancia_metros = (metros_lat**2 + metros_lon**2) ** 0.5
-        distancia_score = 1 / (1 + distancia_metros)
-
-        if servicio == "Policia":
-            tiempo_respuesta =  distancia_metros / (15*60)  # Velocidad promedio de un vehículo de policia en m/s, pasado a minutos
-        else:
-            tiempo_respuesta =  distancia_metros / (11*60)  # Velocidad promedio de un vehículo de bomberos o ambulancia en m/s, pasado a minutos
-
-        tiempo_total+=tiempo_respuesta
-
-
-        pesos = {
-            "tipo": 0.2,
-            "discapacidad": 0.25,
-            "nivel": 0.4,
-            "distancia": 0.25
-        }
-
-        # --- Cálculo del coeficiente ponderado ---
-        coeficiente = (
-            tipo_score * pesos["tipo"] +
-            disc_score * pesos["discapacidad"] +
-            nivel_score * pesos["nivel"] +
-            distancia_score * pesos["distancia"]
-        )
-
-        
-        return round(coeficiente, 4), tiempo_respuesta, tiempo_total, distancia_metros
     
     @staticmethod
     def asignar_vehiculo(vehiculos, emergencias):
@@ -307,6 +229,7 @@ class BussinesLogic(beam.DoFn):
             match_list_vehiculos_id.append(mejor_vehiculo["recurso_id"])
             asignaciones.append((mejor_vehiculo, match_evento))
 
+
         for asignacion in asignaciones:
             yield asignacion
 
@@ -326,7 +249,7 @@ class BussinesLogic(beam.DoFn):
         for i, emergencia in enumerate(emergencias):
             coeficinetes_lista = []
             for vehiculo in vehiculos:
-                coficiente = self.calculo_coeficiente(vehiculo, emergencia)[0]
+                coficiente = calculo_coeficiente(vehiculo, emergencia)[0]
                 coeficinetes_lista.append(coficiente)
             emergencia["coeficientes"]=coeficinetes_lista
         
