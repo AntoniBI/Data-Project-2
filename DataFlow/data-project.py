@@ -102,10 +102,10 @@ def calculo_coeficiente(vehiculo, emergencia):
         tiempo_total= 30
     elif nivel_emergencia == "Nivel 2: Emergencia moderada":
         nivel_score= 0.5
-        tiempo_total= 60
+        tiempo_total= 1
     elif nivel_emergencia == "Nivel 3: Emergencia grave":
         nivel_score= 0.8
-        tiempo_total= 120
+        tiempo_total= 1
 
     delta_lat = latitud_emergencia - latitud_vehiculo
     delta_lon = longitud_emergencia - longitud_vehiculo
