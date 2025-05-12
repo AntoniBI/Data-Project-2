@@ -17,7 +17,7 @@ steps:
     id: Run Dataflow Flex Template
     args: ['dataflow', 'flex-template', 'run', '$_DATAFLOW_JOB_NAME',
            '--template-file-gcs-location=gs://$_DATAFLOW_BASE_BUCKET/$_DATAFLOW_TEMPLATE_NAME.json',
-           '--parameters=project_id=$PROJECT_ID,--emergency_events_subscription=$_EMER-SUB --vehicle_subscription=$EMER-UBI --big_query_dataset=$BQ --big_query_table_matched=$_BQ_DATASET --big_query_table_no_matched=$_BQ_SATASET-NO --no_matched_topic=$_NO-MATCH-TOP --table_sql:$_SQL --streamlit_topic:$_STR',
+           '--parameters=project_id=$PROJECT_ID,--emergency_events_subscription=$_EMER_SUB,--vehicle_subscription=$EMER_UBI,--big_query_dataset=$BQ,--big_query_table_matched=$_BQ_DATASET,--big_query_table_no_matched=$_BQ_SATASET_NO,--no_matched_topic=$_NO_MATCH_TOP,--table_sql:$_SQL,--streamlit_topic:$_STR',
            '--max-workers=1'
     ]
     waitFor: ['Build Dataflow Flex Template']
@@ -32,11 +32,11 @@ substitutions:
   _ARTIFACT_REGISTRY_IMAGE_NAME: dataflow-build
   _DATAFLOW_PYTHON_FILE_PATH: .\DataFlow\data-project.py
   _DATAFLOW_REQUIREMENTS_FILE_PATH: .\DataFlow\requirements.txt
-  _EMER-SUB: emergencias_events-sub
-  _EMER-UBI: emergencias_ubi_autos-sub
+  _EMER_SUB: emergencias_events-sub
+  _EMER_UBI: emergencias_ubi_autos-sub
   _BQ: emergencia_eventos
   _BQ_DATASET: emergencias-macheadas
-  _BQ_SATASET-NO: emergencias-no-macheadas
-  _NO-MATCH-TOP: no_matched
+  _BQ_SATASET_NO: emergencias-no-macheadas
+  _NO_MATCH_TOP: no_matched
   _SQL: recursos
   _STR: streamlit
