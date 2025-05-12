@@ -305,6 +305,7 @@ class LiberarRecurso(beam.DoFn):
         self.zone = "europe-southwest1"
         self.project_id = project_id
         self.table_sql = table_sql
+        self.watermark=150*60
 
     def setup(self):
         connector = Connector()
@@ -327,7 +328,7 @@ class LiberarRecurso(beam.DoFn):
         recurso_id, tiempo = element
 
         stored_test_state.add(str(recurso_id))
-        tiempo_float=tiempo.astimezone(pytz.UTC).timestamp()
+        tiempo_float=tiempo.astimezone(pytz.UTC).timestamp()+self.watermark
         timer.set(tiempo_float)
         
         logging.info(f"Recurso_id {recurso_id} almacenado para liberar en {tiempo}")
@@ -336,7 +337,7 @@ class LiberarRecurso(beam.DoFn):
     def expiry(self, buffer = beam.DoFn.StateParam(TEST_STATE), timer = beam.DoFn.TimerParam(TIMER)):
         vehiculos_ids = list(buffer.read())
         for vehiculo_id in vehiculos_ids:
-            self.liberar_recurso(int(vehiculo_id))
+            self.liberar_recurso(vehiculo_id)
         buffer.clear()
         timer.clear()
 
