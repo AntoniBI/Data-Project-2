@@ -1,11 +1,6 @@
 # Terraform state files
-<<<<<<< HEAD
 Terraform/terraform.tfstate
 Terraform/terraform.tfstate.backup
-=======
-terraform.tfstate
-terraform.tfstate.backup
->>>>>>> parent of 3007bc9e (main)
 *.tfstate
 *.tfstate.backup
 
