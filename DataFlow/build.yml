@@ -17,7 +17,7 @@ steps:
     id: Run Dataflow Flex Template
     args: ['dataflow', 'flex-template', 'run', '$_DATAFLOW_JOB_NAME',
            '--template-file-gcs-location=gs://$_DATAFLOW_BASE_BUCKET/$_DATAFLOW_TEMPLATE_NAME.json',
-           '--parameters=project_id=$PROJECT_ID,--emergency_events_subscription=$_EMER_SUB,--vehicle_subscription=$EMER_UBI,--big_query_dataset=$BQ,--big_query_table_matched=$_BQ_DATASET,--big_query_table_no_matched=$_BQ_SATASET_NO,--no_matched_topic=$_NO_MATCH_TOP,--table_sql:$_SQL,--streamlit_topic:$_STR',
+           '--parameters=project_id=$PROJECT_ID,--emergency_events_subscription=$_EMER_SUB,--vehicle_subscription=$_EMER_UBI,--big_query_dataset=$_BQ,--big_query_table_matched=$_BQ_DATASET,--big_query_table_no_matched=$_BQ_SATASET_NO,--no_matched_topic=$_NO_MATCH_TOP,--table_sql:$_SQL,--streamlit_topic:$_STR',
            '--max-workers=1'
     ]
     waitFor: ['Build Dataflow Flex Template']
