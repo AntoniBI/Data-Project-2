@@ -106,3 +106,4 @@ module "cloud_function_pubsub" {
   project_id = "splendid-strand-452918-e6"
   region     = "europe-west1"
 }
+

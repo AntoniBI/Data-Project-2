@@ -30,8 +30,8 @@ substitutions:
   _REGION_ID: europe-west6
   _ARTIFACT_REGISTRY_REPOSITORY: dataflow-build
   _ARTIFACT_REGISTRY_IMAGE_NAME: dataflow-build
-  _DATAFLOW_PYTHON_FILE_PATH: .\DataFlow\data-project.py
-  _DATAFLOW_REQUIREMENTS_FILE_PATH: .\DataFlow\requirements.txt
+  _DATAFLOW_PYTHON_FILE_PATH: /Dataflow/data-project.py
+  _DATAFLOW_REQUIREMENTS_FILE_PATH: /Dataflow/requirements.txt
   _EMER_SUB: emergencias_events-sub
   _EMER_UBI: emergencias_ubi_autos-sub
   _BQ: emergencia_eventos

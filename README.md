@@ -91,4 +91,7 @@ Todo el sistema está automatizado con **Terraform**, dividido en módulos indep
 
 Cada carpeta configura su propio recurso y **Service Account**, siguiendo el principio de **mínimos privilegios**.
 
----
+Este sistema está diseñado para mejorar la eficiencia y rapidez en la gestión de emergencias durante eventos catastróficos como la DANA, ayudando a priorizar vidas y recursos cuando más se necesitan.
+
+## VIDEO DEMO
+https://youtu.be/RijW_lruL7w
