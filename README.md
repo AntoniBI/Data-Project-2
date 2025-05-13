@@ -1,77 +1,95 @@
-# Data-Project-2
 
-# 🚨 Proyecto de Asistencia de Emergencias  Valencia
+# 🚨 Simulador del 112 de Emergencias – Proyecto Cloud
 
 ## 📝 Descripción General
 
-Este proyecto tiene como finalidad crear una plataforma tecnológica para gestionar solicitudes de emergencia ciudadana en el contexto de la DANA en Valencia. Inspirado en el modelo del *112, permite a los ciudadanos reportar situaciones urgentes a través de una aplicación sencilla construida con **Streamlit, mientras que el sistema se encarga de distribuir de forma inteligente los **recursos de emergencia disponibles* (bomberos, ambulancias, y policías).
+Este proyecto emula el funcionamiento de un sistema de emergencias **112**, desde la recepción de incidentes hasta la asignación de recursos de respuesta (policía, bomberos, ambulancias), todo desplegado sobre **Google Cloud Platform (GCP)**.
 
-La plataforma utiliza la infraestructura de *Google Cloud Platform* para procesar los datos en tiempo real, emparejar solicitudes con recursos adecuados y almacenar toda la información.
-
-El sistema prioriza las solicitudes más críticas y asigna los recursos más cercanos, teniendo en cuenta su disponibilidad.
+El sistema incluye generación de emergencias simuladas, localización de vehículos, asignación inteligente en tiempo real y visualización analítica de resultados. Todo orquestado con **servicios gestionados**, automatizado mediante **Terraform**.
 
 ---
 
-## ⚙️ Funcionalidades Principales
+## 🧩 Componentes Principales
 
-•⁠  ⁠*📨 Registro de Incidencias*: Formulario para que los ciudadanos reporten situaciones de emergencia.
+### 🌐 Web de Emergencias (Streamlit)
+- Interfaz donde el usuario puede introducir manualmente emergencias.
+- Conectada a una **API centralizada** que se encarga del procesamiento.
 
-•⁠  ⁠*🔁 Asignación Inteligente de Recursos*: El sistema distribuye recursos (ambulancias, bomberos, policías) según urgencia, ubicación y disponibilidad.
+### ⚙️ Simuladores
+- **Generador de Emergencias**: Envía emergencias ficticias al sistema.
+- **Generador de Vehículos**: Simula vehículos disponibles con su ubicación.
+- Ambos están desplegados en **Cloud Run** como servicios o jobs.
 
-•⁠  ⁠*📍 Criterio de emparejamiento*: Calculamos un coeficiente haciendo una mezcla entre la urgencia de la emergencia y su proximidad
+### 🚪 API Centralizada (FastAPI)
+- Punto de entrada para las emergencias (web o generador).
+- Publica los datos en dos **topics de Pub/Sub**:
+  - Emergencias
+  - Vehículos
+- Consulta una base de datos **PostgreSQL (Cloud SQL)** para conocer el estado de los recursos.
+- Usa **Service Accounts** con permisos mínimos para mayor seguridad.
 
-•⁠  ⁠*⚡ Procesamiento en Tiempo Real*: Pipeline con Apache Beam desplegado en Dataflow.
+### 🔄 Procesamiento con Dataflow (Apache Beam)
+- Consume en tiempo real los mensajes de los topics.
+- Agrupa emergencias y vehículos por tipo de servicio:
+  - 🚓 Policía
+  - 🚑 Ambulancias
+  - 🚒 Bomberos
+- Calcula coeficientes de prioridad basados en:
+  - Nivel de emergencia
+  - Distancia al vehículo
+- Asigna vehículos óptimos y gestiona resultados:
+  - ✅ **BigQuery**: almacenamiento de asignaciones y emergencias
+  - ✅ **Cloud SQL**: actualiza estado y ubicación de los recursos
+  - 🔁 **Pub/Sub**: reenvía emergencias no asignadas para reintento
+  - 📩 **Pub/Sub**: simula notificación al usuario vía Firebase
 
-•⁠  ⁠*📊 Almacenamiento y Visualización*: Registro y análisis de datos en BigQuery y dashboards en Grafana.
+### 🗃️ Base de Datos (PostgreSQL en Cloud SQL)
+- Guarda información de cada vehículo:
+  - Ubicación
+  - Estado (`asignado = True / False`)
+- Se actualiza con cada asignación o liberación desde Dataflow.
 
-•⁠  ⁠*🛠️ Despliegue Automatizado*: Toda la infraestructura está definida como código con Terraform.
+### 📊 Análisis en Tiempo Real (BigQuery + Grafana)
+- Emergencias y asignaciones quedan registradas en BigQuery.
+- **Grafana**, desplegado en **Cloud Run**, se conecta a BigQuery para mostrar dashboards en tiempo real.
 
----
-
-## 🏗️ Arquitectura del Proyecto
-
-![Arquitectura del proyecto](./arquitectura.jpeg)
-
-
-## 🔄 Flujo de Datos
-
-1.⁠ ⁠Un ciudadano reporta una emergencia a través de un formulario en Streamlit.
-2.⁠ ⁠La información se publica en *Pub/Sub* en un canal específico para emergencias.
-3.⁠ ⁠Un job de *Apache Beam* en *Dataflow* procesa los eventos:
-   - Clasifica los reportes por tipo de emergencia.
-   - Evalúa el nivel de urgencia.
-   - Busca recursos (ambulancias, bomberos o policías) disponibles y próximos.
-   - Asigna el recurso más adecuado mediante el criterio e asignacion.
-   - Si no hay disponibilidad, el evento se inserta en un topic (No-Mached) para que se reintente.
-   - Finalmente, se registran los resultados en BigQuery tanto los resultados macheados como los no macheados.
-
-*Tablas en BigQuery:*
-•⁠  ⁠⁠ emergencias-macheadas ⁠: Emergencias asignadas correctamente.
-•⁠  ⁠⁠ emergencias-no-macheadas ⁠: Emergencias no asignadas por falta de recursos.
-
-*Grafana* se conecta a estas tablas para ofrecer una visión operativa en tiempo real.
-
----
-
-## 🧠 Criterio de Asignación
-
-El sistema de asignación funciona con base en los siguientes pasos:
-
-1.⁠ ⁠Se ordenan las solicitudes según su nivel de urgencia (de mayor a menor).
-2.⁠ ⁠Para cada solicitud, se localiza el recurso libre más cercano dentro de su zona de cobertura.
-3.⁠ ⁠Se crea una asignación y el recurso queda marcado como ocupado para evitar duplicidades.
-4.⁠ ⁠Las solicitudes sin recursos disponibles se almacenan en el topic para su posterior reintento.
+### 🔔 Firebase (Simulación)
+- Se plantea el uso de Firebase para notificar al usuario qué recurso ha sido asignado.
+- Aunque no se ha implementado (por limitaciones de cuenta), se **simula** con una Cloud Function que imprime el mensaje recibido por Pub/Sub.
 
 ---
 
-## 🔧 Requisitos Técnicos
+## 🏗️ Arquitectura General
 
-•⁠  ⁠Python 
-•⁠  ⁠Cuenta en Google Cloud 
-•⁠  ⁠Google Cloud SDK
-•⁠  ⁠Terraform como IAAC
+A continuación se muestra un diagrama general del flujo del sistema:
+
+![Arquitectura del proyecto](data.jpg)  
 
 ---
+
+## 🎥 Demo del Proyecto
+
+Puedes ver el funcionamiento completo del sistema en el siguiente video:
+
+📺 [Ver Demo en YouTube](https://www.youtube.com/watch?v=RijW_lruL7w)
+
+---
+
+## 🛠️ Infraestructura como Código (Terraform)
+
+Todo el sistema está automatizado con **Terraform**, dividido en módulos independientes:
+- ArtifactRegistry
+- BigQuery
+- CloudApi
+- CloudFunction
+- CloudJobGeneradorApp
+- CloudRunJobGeneradorUbi
+- CloudRunGrafana
+- CloudSQL
+- CloudStreamlit
+- Pub/Sub
+
+Cada carpeta configura su propio recurso y **Service Account**, siguiendo el principio de **mínimos privilegios**.
 
 Este sistema está diseñado para mejorar la eficiencia y rapidez en la gestión de emergencias durante eventos catastróficos como la DANA, ayudando a priorizar vidas y recursos cuando más se necesitan.
 
